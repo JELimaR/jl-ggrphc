@@ -2,18 +2,19 @@ import {createCanvas} from 'canvas';
 import fs from 'fs';
 
 import { Vector } from './Geom/Point';
-import VoronoiDiagram from './VoronoiDiagram';
+import VoronoiDiagramCreator from './Voronoi/VoronoiDiagramCreator';
+// import VorDiagram from './Voronoi/VorDiagram';
 
 const SIZE: Vector = new Vector( {x: 3600, y: 1800} );
 
 const canvas = createCanvas(SIZE.x, SIZE.y);
 const ctx = canvas.getContext('2d');
 
-let vor: VoronoiDiagram = new VoronoiDiagram(SIZE.x, SIZE.y, 1000);
+let vdc: VoronoiDiagramCreator = new VoronoiDiagramCreator(SIZE.x, SIZE.y, 1000, 'poisson');
 
-vor.createDiagram( 0 );
+vdc.createDiagram( 2 );
 
-vor.drawDiagram( ctx );
+vdc.diagram.drawDiagram( ctx );
 
 const out = fs.createWriteStream( __dirname + '/../test.png');
 
