@@ -1,47 +1,55 @@
 import { Voronoi, BoundingBox, Site, Diagram, Cell } from 'voronoijs';
 import {CanvasRenderingContext2D} from 'canvas';
 
-
 export default class VoronoiDiagram {
 
-    private static _instance: VoronoiDiagram;
+    private _vor: Voronoi;
+	private _bbox: BoundingBox;
     private _diagram: Diagram | undefined;
+	private _sites: Site[];
 
-    private constructor() { /*  */}
+    constructor(XMAX: number, YMAX: number, n: number = 100) {
+		this._vor = new Voronoi();
+        this._bbox = {xl: 0, xr: XMAX, yt: 0, yb: YMAX}; // xl is x-left, xr is x-right, yt is y-top, and yb is y-bottom
 
-    static get instance(): VoronoiDiagram {
-        if ( !VoronoiDiagram._instance ) {
-            VoronoiDiagram._instance = new VoronoiDiagram();
-        }
-        return VoronoiDiagram._instance;
-    }
+		this._sites = this.randomSites(XMAX,YMAX,n);
+	}
 
-    createDiagram( XMAX: number, YMAX: number, n: number ): Diagram {
-        let voronoi = new Voronoi();
-        let bbox: BoundingBox = {xl: 0, xr: XMAX, yt: 0, yb: YMAX}; // xl is x-left, xr is x-right, yt is y-top, and yb is y-bottom
-    
-        let sites: Site[] = this.randomSites(XMAX,YMAX,n);
+    createDiagram(  ): Diagram {
+            
+        let sites: Site[] = this._sites;
     
         // a 'vertex' is an object exhibiting 'x' and 'y' properties. The
         // Voronoi object will add a unique 'voronoiId' property to all
         // sites. The 'voronoiId' can be used as a key to lookup the associated cell
         // in diagram.cells.
     
-        this._diagram = voronoi.compute(sites, bbox);
+        this._diagram = this.calculate();
 
         let h=3;
         for (let i=0; i < h ; i++) {
-            sites = this.improveSites( this._diagram.cells );
-            this._diagram = voronoi.compute( sites, bbox )
+            this._diagram = this.relax();
         }
 
         return this._diagram;
-
     }
 
     get diagram(): Diagram | undefined {
-        return this._diagram;     
+        return this._diagram;
     }
+
+	private calculate(): Diagram {
+		return this._vor.compute( this._sites, this._bbox )
+	}
+
+	private relax(): Diagram {
+		if (!this._diagram) {
+			throw new Error(``);
+		} else {
+			this._sites = this.improveSites(this._diagram.cells)
+			return this.calculate();
+		}		
+	}
 
     private randomSites (XMAX: number, YMAX: number, n: number): Site[] {
         let out: Site[] = [];
