@@ -4,37 +4,34 @@ import PoissonDiskSampling from 'poisson-disk-sampling'
 import VorPolygon from './VorPolygon';
 import VorDiagram from './VorDiagram';
 
+import RandomNumberGenerator from '../Geom/RandomNumberGenerator';
+
+import { Vector } from '../Geom/Point';
+
+let fI = RandomNumberGenerator.makeRandomInt(10582);
+let fF = RandomNumberGenerator.makeRandomFloat(15);
+
 export default class VoronoiDiagramCreator {
 
     private _vor: Voronoi;
 	private _bbox: BoundingBox;
     private _diagram: Diagram | undefined;
 	private _sites: Site[];
-	private pointGenerate: 'random' | 'poisson';
 
-    constructor(XMAX: number, YMAX: number, n: number = 100, pointGenerate: 'random' | 'poisson' = 'poisson') {
+    constructor(SIZE: Vector, seed: number, n: number = 100) {
 		this._vor = new Voronoi();
-        this._bbox = {xl: 0, xr: XMAX, yt: 0, yb: YMAX}; // xl is x-left, xr is x-right, yt is y-top, and yb is y-bottom
-		this._sites = (pointGenerate === 'random')
-			? this.randomSites(XMAX,YMAX,n)
-			: this.poissonDiskSites(XMAX,YMAX,n);
-		this.pointGenerate = pointGenerate;
+		// xl is x-left, xr is x-right, yt is y-top, and yb is y-bottom
+        this._bbox = {xl: 0, xr: SIZE.x, yt: 0, yb: SIZE.y};
+		this._sites = this.randomSites(SIZE.x, SIZE.y, seed, n)
 	}
 
     createDiagram( rel: number = 0 ): void {
-
-        // a 'vertex' is an object exhibiting 'x' and 'y' properties. The
-        // Voronoi object will add a unique 'voronoiId' property to all
-        // sites. The 'voronoiId' can be used as a key to lookup the associated cell
-        // in diagram.cells.
-    
+		    
         this._diagram = this.calculate();
 
-		if (this.pointGenerate === 'random') {
-			for (let i=1; i <= rel ; i++) {
-				this._diagram = this.relax();
-			}
-		}
+		for (let i=1; i <= rel ; i++) {
+			this._diagram = this.relax();
+		}		
 
     }
 
@@ -58,33 +55,14 @@ export default class VoronoiDiagramCreator {
 		}		
 	}
 
-	private poissonDiskSites (XMAX: number, YMAX: number, n: number): Site[] {
+    private randomSites (XMAX: number, YMAX: number, seed: number, n: number): Site[] {
         let out: Site[] = [];
 
-		let pds = new PoissonDiskSampling({
-			shape: [XMAX, YMAX],
-			minDistance: 2*(XMAX+YMAX)/(n),
-			maxDistance: 2*(XMAX+YMAX)/(n),
-			tries: 100
-		});
-
-		let points = pds.fill();
-
-		for (let p of points) {
-			let xx = Math.round( p[0]*10000)/10000;
-            let yy = Math.round( p[1]*10000)/10000;
-            out.push( {id: 0, x: xx, y: yy} );
-		}
-
-        return out;
-    }
-
-    private randomSites (XMAX: number, YMAX: number, n: number): Site[] {
-        let out: Site[] = [];
+		const randFunc = RandomNumberGenerator.makeRandomFloat(seed);
 
         for (let i=0; i<n; i++ ) {
-            let xx = Math.round( Math.random()*XMAX*10000 )/10000;
-            let yy = Math.round( Math.random()*YMAX*10000 )/10000;
+            let xx = Math.round( randFunc()*XMAX*10000 )/10000;
+            let yy = Math.round( randFunc()*YMAX*10000 )/10000;
             out.push( {id: i, x: xx, y: yy} );
         }
         return out;

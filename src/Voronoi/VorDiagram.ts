@@ -2,7 +2,6 @@ import { Diagram, Edge } from 'voronoijs';
 import Point from "../Geom/Point";
 import VorPolygon from "./VorPolygon";
 
-
 export default class VorDiagram {
     private _polygons: VorPolygon[];
     private _edges: Edge[];
@@ -14,40 +13,49 @@ export default class VorDiagram {
         this._vertices = d.vertices.map( (v) => new Point(v.x,v.y) );
     }
 
-    drawDiagram(ctx: CanvasRenderingContext2D) {
-        
-        for (let pp of this._polygons) {
-            const hes = pp.cell.halfedges;
-            let lrg: number = hes.length;
-    
-            const SIZE = 2
-            // 
-            ctx.fillStyle = 'red'
-            ctx.fillRect(pp.cell.site.x-SIZE/2, pp.cell.site.y-SIZE/2, SIZE, SIZE);
-    
-            ctx.beginPath();
-    
-            ctx.moveTo(hes[0].getStartpoint().x, hes[0].getStartpoint().y)
-            for (let i=0; i < lrg; i++) {
-                ctx.lineTo(hes[i].getEndpoint().x, hes[i].getEndpoint().y)
-                
-            }
-            ctx.stroke();
-            ctx.fillStyle = 'blue';
-            ctx.closePath();
+	set height(h: number) {
+		this._polygons.forEach((p: VorPolygon) => {
+			p.height = h;
+		})
+	}
 
+	drawH(ctx: CanvasRenderingContext2D, transparence: number = 1) {
+		this._polygons.forEach((p: VorPolygon) => {
+			p.drawH(ctx, transparence);
+		})
+	}
+
+    drawDiagram(ctx: CanvasRenderingContext2D) {
+        for (let pp of this._polygons) {
+			pp.draw(ctx, {
+				color: `#800000`,
+				drawType: 'stroke'
+			});
         }
-        let p = this._polygons[77];
-        p.fill(ctx, 'blue');
-        let ni = p.neighborsId;
-        console.log(ni)
-        for (let n in ni) {
-            let npol = this._polygons.find((e) => e.id === ni[n]);
-            if (npol) {
-                npol.fill(ctx, 'green');
-            }
-        }
-        
     }
+
+	getNeighbors(pol: VorPolygon): VorPolygon[] {
+		let out: VorPolygon[] = [];
+		for ( let id of pol.neighborsId) {
+			const n: VorPolygon | undefined = this._polygons.find( (p) => p.id === id );
+			if (n) out.push(n);
+		}
+		return out;
+	}
+
+	getPolygonFromPoint(p: Point): VorPolygon {
+		let out: VorPolygon = this._polygons[0];
+		let lrg: number = this._polygons.length, minDis: number = Infinity;
+
+		for (let i=0; i<lrg; i++) {
+			let c: Point = this._polygons[i].center;
+			let dis: number = Point.distance(c,p);
+			if (dis < minDis) {
+				out = this._polygons[i];
+				minDis = dis;
+			}
+		}
+		return out;
+	}
 
 }

@@ -1,23 +1,61 @@
-import {createCanvas} from 'canvas';
-import fs from 'fs';
+import OCanvas from './OCanvas'
 
-import { Vector } from './Geom/Point';
+import Point, { Vector } from './Geom/Point';
 import VoronoiDiagramCreator from './Voronoi/VoronoiDiagramCreator';
-// import VorDiagram from './Voronoi/VorDiagram';
+
+import VorDiagram from './Voronoi/VorDiagram';
+import VorPolygon from './Voronoi/VorPolygon';
+
+import RandomNumberGenerator from './Geom/RandomNumberGenerator'
 
 const SIZE: Vector = new Vector( {x: 3600, y: 1800} );
 
-const canvas = createCanvas(SIZE.x, SIZE.y);
-const ctx = canvas.getContext('2d');
+const oc: OCanvas = new OCanvas(SIZE);
+oc.saveDraw( __dirname + '/../test.png' );
 
-let vdc: VoronoiDiagramCreator = new VoronoiDiagramCreator(SIZE.x, SIZE.y, 1000, 'poisson');
+const ctx: CanvasRenderingContext2D = oc.context;
+//ctx.transform(1,0,-1,0,0,0);
 
-vdc.createDiagram( 2 );
+let seed: number = 231;
+let vdc: VoronoiDiagramCreator = new VoronoiDiagramCreator(SIZE, seed, 4000);
+console.log('creating diagram')
+vdc.createDiagram( 5 );
+let vd: VorDiagram = vdc.diagram;
 
-vdc.diagram.drawDiagram( ctx );
+// vdc.diagram.drawDiagram( ctx );
 
-const out = fs.createWriteStream( __dirname + '/../test.png');
 
-const stream = canvas.createPNGStream()
-stream.pipe(out);
-console.log('finished');
+const rnd = RandomNumberGenerator.makeRandomFloat(28);
+
+let p: Point = new Point( 1800*rnd(), 900*rnd() );
+console.log(p)
+let vp = vd.getPolygonFromPoint( p );
+
+// create island
+console.log('creating island')
+vd.height = 0.1*rnd();
+
+let currH = 0.85;
+vp.height = currH;
+//vp.drawH(ctx, 1)
+
+let que: {hh: number, pp: VorPolygon}[] = [{hh: vp.height, pp: vp}];
+
+while (que.length !== 0) {
+	let g = que.shift();
+	if (g) {		
+		if (g.hh > 0.2) {
+			let ns: VorPolygon[] = vd.getNeighbors(g.pp);
+			ns.forEach( (n: VorPolygon) => {
+				if (n.height < 0.1 ) {
+					n.height = g!.pp.height*0.8*(0.9+0.2*rnd());
+					que.push({hh: n.height, pp: n});
+				}
+			})
+		}
+	}
+}
+
+vd.drawH( ctx, 0.2 );
+
+
