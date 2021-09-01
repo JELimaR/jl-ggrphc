@@ -1,4 +1,4 @@
-import { Cell, Edge } from "voronoijs";
+import { Cell, Edge, Halfedge } from "voronoijs";
 import Point from '../Geom/Point'
 
 import chroma from 'chroma-js';
@@ -20,10 +20,15 @@ const DefaultDrawOptions: IDrawPolygonOptions = {
 	drawType: 'stroke'
 }
 
+type TypeHeight = 
+	| 'land'
+	| 'water'
+
 export default class VorPolygon {
 
 	private _cell: Cell;
 	private _height: number = -1;
+	private _typeHeight: TypeHeight = 'water';
 
 	constructor( c: Cell ) {
 		this._cell = c;
@@ -43,28 +48,23 @@ export default class VorPolygon {
 	}
 
     get neighborsId(): number[] {
-        let out: number[] = [];
-        for (let e of this._cell.halfedges ) {
-            const edge: Edge = e.edge;
-            if ( edge.lSite.id !== this.id ) {
-                out.push( edge.lSite.id )
-            } else {
-                if ( edge.rSite !== null ) {
-                    out.push( edge.rSite.id );
-                }
-            }
-        }
-        return out;
+        return this._cell.getNeighborIds();
     }
+
+	get isBorder(): boolean {
+		return this._cell.getNeighborIds.length < this._cell.halfedges.length 
+	}
+
+	get typeHeight(): TypeHeight { return this._typeHeight}
+	set typeHeight(en: TypeHeight) { this._typeHeight = en }
 
 	get cell(): Cell { return this._cell }
 
 	set height(h: number) {this._height = h;}
 	get height(): number {return this._height}
 
-	drawH(ctx: CanvasRenderingContext2D, transparence: number): void {
-		// transparence must be between 0 and 1
-		const hcol = colorScale(this.height).alpha(transparence).hex();
+	drawH(ctx: CanvasRenderingContext2D): void {
+		const hcol = colorScale(this.height).hex();
 		this.draw( ctx, {color: hcol, drawType: 'fill'} );
 	}
     
@@ -83,12 +83,16 @@ export default class VorPolygon {
         }
 
 		ctx.strokeStyle = color;
-		ctx.stroke();
+		// ctx.stroke();
 		if (drawType === 'fill') {
 			ctx.fillStyle = color;
 			ctx.fill();
 		}
         ctx.closePath();
     }
+
+	static equals(a: VorPolygon, b: VorPolygon): boolean {
+		return (a._cell.site.id === b._cell.site.id)
+	}
 
 }

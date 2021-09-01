@@ -19,9 +19,15 @@ export default class VorDiagram {
 		})
 	}
 
-	drawH(ctx: CanvasRenderingContext2D, transparence: number = 1) {
+	forEachPolygon(func: (p: VorPolygon) => void) {
 		this._polygons.forEach((p: VorPolygon) => {
-			p.drawH(ctx, transparence);
+			func(p);
+		})
+	}
+
+	drawH(ctx: CanvasRenderingContext2D) {
+		this._polygons.forEach((p: VorPolygon) => {
+			p.drawH(ctx);
 		})
 	}
 
@@ -38,7 +44,10 @@ export default class VorDiagram {
 		let out: VorPolygon[] = [];
 		for ( let id of pol.neighborsId) {
 			const n: VorPolygon | undefined = this._polygons.find( (p) => p.id === id );
-			if (n) out.push(n);
+			if (n) 
+				out.push(n);
+			else 
+				throw new Error('polygon tiene neghbor que no existe');
 		}
 		return out;
 	}

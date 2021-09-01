@@ -1,15 +1,10 @@
 import { Voronoi, BoundingBox, Site, Diagram, Cell, Edge } from 'voronoijs';
-import {CanvasRenderingContext2D} from 'canvas';
-import PoissonDiskSampling from 'poisson-disk-sampling'
-import VorPolygon from './VorPolygon';
+
 import VorDiagram from './VorDiagram';
 
 import RandomNumberGenerator from '../Geom/RandomNumberGenerator';
 
 import { Vector } from '../Geom/Point';
-
-let fI = RandomNumberGenerator.makeRandomInt(10582);
-let fF = RandomNumberGenerator.makeRandomFloat(15);
 
 export default class VoronoiDiagramCreator {
 
@@ -61,8 +56,8 @@ export default class VoronoiDiagramCreator {
 		const randFunc = RandomNumberGenerator.makeRandomFloat(seed);
 
         for (let i=0; i<n; i++ ) {
-            let xx = Math.round( randFunc()*XMAX*10000 )/10000;
-            let yy = Math.round( randFunc()*YMAX*10000 )/10000;
+            let xx = Math.round( randFunc()*XMAX*1000000 )/1000000;
+            let yy = Math.round( randFunc()*YMAX*1000000 )/1000000;
             out.push( {id: i, x: xx, y: yy} );
         }
         return out;

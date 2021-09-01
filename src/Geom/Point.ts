@@ -1,12 +1,12 @@
-
+import * as turf from '@turf/turf'
 
 export default class Point {
 	private _x: number;
 	private _y: number;
 
 	constructor( x: number, y: number ) {
-		this._x = Math.round(x * 10000)/10000;
-		this._y = Math.round(y * 10000)/10000;
+		this._x = Math.round(x * 1000000)/1000000;
+		this._y = Math.round(y * 1000000)/1000000;
 	}
 
 	get x() { return this._x }
@@ -34,6 +34,14 @@ export default class Point {
 
 	static distance(a: Point, b: Point): number {
 		return Math.sqrt( Math.pow(a._x-b._x, 2) + Math.pow(a._y-b._y, 2) );
+	}
+
+	toTurf(): turf.Feature<turf.Point> {
+		return turf.point( [this._x/10-180, this._y/10-90] );
+	}
+
+	static geogDistance(a: Point, b: Point): number {
+		return turf.distance( a.toTurf(), b.toTurf(), {units: 'kilometers'} );
 	}
 }
 
