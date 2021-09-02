@@ -4,6 +4,7 @@ import VoronoiDiagramCreator from './Voronoi/VoronoiDiagramCreator';
 import RandomNumberGenerator from './Geom/RandomNumberGenerator'
 import VorDiagram from './Voronoi/VorDiagram';
 import VorPolygon from './Voronoi/VorPolygon';
+import { random } from 'chroma-js';
 
 interface IMapConstructorEntry {
 	seed: number;
@@ -36,38 +37,58 @@ export default class Map {
 		console.log('generating heighmap');
 
 		const rnd = RandomNumberGenerator.makeRandomFloat(otherSeed);
-		this._diagram.height = 0.1*rnd();
+		this._diagram.height = 0;
 
-		let p: Point = new Point( 3600*rnd(), 1800*rnd() );
-		let center: VorPolygon = this._diagram.getPolygonFromPoint( p );
+		for (let i=0;i<5;i++) {
+			let p: Point = new Point( 3600*rnd(), 1800*rnd() );
+			let center: VorPolygon = this._diagram.getPolygonFromPoint( p );
 
-		this.addIsland(rnd, center, 500);
+			this.addIsland(rnd, center, 4000/(i+1));
+		}
+		
 
 	}
 
-	addIsland(rnd: any, polCent: VorPolygon, radio: number) {
+	addIsland(rnd: any, polStart: VorPolygon, radio: number) {
 
-		let currH = 0.5*rnd()+0.5;
-		polCent.height = currH;
-		console.log(polCent)
+		let currH = 0.5*rnd()+0.5; // pico
+		
+		// start island
+		polStart.height = currH;
+		polStart.mark = true;
+		polStart.typeHeight = 'land';
+		console.log(polStart)
 
-		let que: {hh: number, pp: VorPolygon}[] = [{hh: polCent.height, pp: polCent}];
+		// se crea la cola
+		let que: VorPolygon[] = [polStart];
+		let dismark: VorPolygon[] = [];
+		
+		while (que.length !== 0 ) {
+			let poli = que.shift();
+			if (poli) {
+				dismark.push(poli);
 
-		while (que.length !== 0) {
-			let g = que.shift();
-			if (g) {		
-				if ( Point.geogDistance( polCent.center, g.pp.center ) < radio ) {
-					let ns: VorPolygon[] = this._diagram.getNeighbors(g.pp);
-					ns.forEach( (n: VorPolygon) => {
-						if (n.typeHeight !== 'land' ) {
-							n.height = g!.pp.height;
-							n.typeHeight = 'land'
-							que.push({hh: n.height, pp: n});
-						}
-					})
-				}
+				const centerDis: number = Point.geogDistance( polStart.center, poli.center );
+				
+				let ns: VorPolygon[] = this._diagram.getNeighbors(poli);
+				ns.forEach( (n: VorPolygon) => {
+					const h: number = ((radio-centerDis)/radio * 0.75 + 0.25 * rnd())*currH // mejorar
+					if ( !n.mark && h > 0.01 ) {
+						
+						n.mark = true;
+						n.height += h;
+						if (n.height > 1) {n.height = 1}
+						n.typeHeight = 'land';
+						que.push(n);
+					}						
+				})
+				
 			}
 		}
+
+		dismark.forEach( (p: VorPolygon) => {
+			p.mark = false;
+		} )
 
 	}
 

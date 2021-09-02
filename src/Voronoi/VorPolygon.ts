@@ -29,6 +29,7 @@ export default class VorPolygon {
 	private _cell: Cell;
 	private _height: number = -1;
 	private _typeHeight: TypeHeight = 'water';
+	private _mark: boolean = false;
 
 	constructor( c: Cell ) {
 		this._cell = c;
@@ -57,6 +58,9 @@ export default class VorPolygon {
 
 	get typeHeight(): TypeHeight { return this._typeHeight}
 	set typeHeight(en: TypeHeight) { this._typeHeight = en }
+
+	get mark(): boolean {return this._mark}
+	set mark(m: boolean) {this._mark = m}
 
 	get cell(): Cell { return this._cell }
 
