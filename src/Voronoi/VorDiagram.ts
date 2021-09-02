@@ -2,6 +2,10 @@ import { Diagram, Edge } from 'voronoijs';
 import Point from "../Geom/Point";
 import VorPolygon from "./VorPolygon";
 
+class dataVorDiagram {
+	
+}
+
 export default class VorDiagram {
     private _polygons: VorPolygon[];
     private _edges: Edge[];
@@ -25,9 +29,9 @@ export default class VorDiagram {
 		})
 	}
 
-	drawH(ctx: CanvasRenderingContext2D) {
+	drawH(ctx: CanvasRenderingContext2D, drawHW: boolean) {
 		this._polygons.forEach((p: VorPolygon) => {
-			p.drawH(ctx);
+			p.drawH(ctx, drawHW);
 		})
 	}
 

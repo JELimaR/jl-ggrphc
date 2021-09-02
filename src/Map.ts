@@ -38,62 +38,91 @@ export default class Map {
 
 		const rnd = RandomNumberGenerator.makeRandomFloat(otherSeed);
 		this._diagram.height = 0;
-
-		for (let i=0;i<5;i++) {
-			let p: Point = new Point( 3600*rnd(), 1800*rnd() );
+/*
+		for (let i=0;i<3;i++) {
+			let p: Point = new Point( 3000*rnd()+300, 1500*rnd() +150);
 			let center: VorPolygon = this._diagram.getPolygonFromPoint( p );
 
-			this.addIsland(rnd, center, 4000/(i+1));
+			this.addIsland(rnd, center, 3000/(i+1));
 		}
-		
+*/
+
+		let centers: {p: Point, r: number, h: number}[] = [
+			{p: new Point( 300, 900), r: 8011, h: 0.85},
+			{p: new Point( 320, 750), r: 5835, h: 0.65},
+			{p: new Point( 320, 550), r: 2835, h: 0.74},
+			{p: new Point( 320, 450), r: 3135, h: 0.81}
+		];
+		for (let c of centers) {
+			let center: VorPolygon = this._diagram.getPolygonFromPoint( c.p );
+			this.addIsland(rnd, center, c.r, c.h);
+		}		
 
 	}
 
-	addIsland(rnd: any, polStart: VorPolygon, radio: number) {
+	addIsland(rnd: any, polStart: VorPolygon, radio: number, peakH: number) {
 
-		let currH = 0.5*rnd()+0.5; // pico
+		let decr: number = Math.exp(-4.5/radio);
 		
 		// start island
-		polStart.height = currH;
+		polStart.height = peakH;
 		polStart.mark = true;
 		polStart.typeHeight = 'land';
 		console.log(polStart)
 
-		// se crea la cola
-		let que: VorPolygon[] = [polStart];
+		// qeue
+		let que: {currh: number, currP:VorPolygon}[] = [{currh:peakH, currP:polStart}];
 		let dismark: VorPolygon[] = [];
-		
+		let count = 0;
 		while (que.length !== 0 ) {
-			let poli = que.shift();
-			if (poli) {
-				dismark.push(poli);
+			let q = que.shift();
+			if (q) {
+				//const {currh, currP} = q;
+				
+				dismark.push(q.currP);
 
-				const centerDis: number = Point.geogDistance( polStart.center, poli.center );
+				if (dismark.length % 1000 === 0) {
+					console.log(dismark.length, q.currh);
+				}
 				
-				let ns: VorPolygon[] = this._diagram.getNeighbors(poli);
+				let ns: VorPolygon[] = this._diagram.getNeighbors(q.currP);
 				ns.forEach( (n: VorPolygon) => {
-					const h: number = ((radio-centerDis)/radio * 0.75 + 0.25 * rnd())*currH // mejorar
-					if ( !n.mark && h > 0.01 ) {
-						
+
+					if (!n.mark) {
 						n.mark = true;
-						n.height += h;
-						if (n.height > 1) {n.height = 1}
-						n.typeHeight = 'land';
-						que.push(n);
-					}						
+
+						const parentDis: number = Point.geogDistance( n.center, q!.currP.center );
+						const height: number = Math.pow(decr, parentDis) * q!.currh * (0.2*rnd() + 0.9);
+
+						n.height = n.height + height;
+						if (n.height > 1) 
+							n.height = 1
+						if (n.height > 0.2)
+							n.typeHeight = 'land';
+
+						if ( height > 0.1 ) {
+							count++;
+							que.push({currh: height, currP:n});
+						}
+					}
+					/*
+					if (que.length > preleng) {
+						console.log('es true')
+					}*/
+								
 				})
-				
 			}
 		}
-
-		dismark.forEach( (p: VorPolygon) => {
+		console.log('finished')
+		dismark.forEach((p: VorPolygon) => {
 			p.mark = false;
-		} )
+		})
 
 	}
 
-	drawHeighmap(): void {
-		this._diagram.drawH( this._oc.context );
+	drawHeighmap(drawHeighWater: boolean): void {
+		this._diagram.drawH( this._oc.context, drawHeighWater );
 	}
+
 
 }

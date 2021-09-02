@@ -67,8 +67,11 @@ export default class VorPolygon {
 	set height(h: number) {this._height = h;}
 	get height(): number {return this._height}
 
-	drawH(ctx: CanvasRenderingContext2D): void {
-		const hcol = colorScale(this.height).hex();
+	drawH(ctx: CanvasRenderingContext2D, drawHeightWater: boolean = false): void {
+		const h: number = (this._typeHeight === 'water' && !drawHeightWater)
+			? 0.05
+			: this._height;
+		const hcol = colorScale(h).hex();
 		this.draw( ctx, {color: hcol, drawType: 'fill'} );
 	}
     
