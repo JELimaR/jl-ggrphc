@@ -1,18 +1,22 @@
-import { Diagram, Edge } from 'voronoijs';
+import { Cell, Diagram, Edge } from 'voronoijs';
 import Point from "../Geom/Point";
 import VorPolygon from "./VorPolygon";
 
-class dataVorDiagram {
+interface dataVorDiagram {
 	
 }
 
 export default class VorDiagram {
-    private _polygons: VorPolygon[];
+    private _polygons: Map<number, VorPolygon>;
     private _edges: Edge[];
     private _vertices: Point[];
 
     constructor( d: Diagram ) {
-        this._polygons = d.cells.map( (c) => new VorPolygon(c) );
+        this._polygons = new Map<number, VorPolygon>();
+		d.cells.forEach( (c: Cell) => {
+			let p = new VorPolygon(c);
+			this._polygons.set(p.id,p);
+		});
         this._edges = [...d.edges];
         this._vertices = d.vertices.map( (v) => new Point(v.x,v.y) );
     }
@@ -36,18 +40,18 @@ export default class VorDiagram {
 	}
 
     drawDiagram(ctx: CanvasRenderingContext2D) {
-        for (let pp of this._polygons) {
+		this._polygons.forEach( (pp: VorPolygon) => {
 			pp.draw(ctx, {
 				color: `#800000`,
 				drawType: 'stroke'
 			});
-        }
+		})
     }
 
 	getNeighbors(pol: VorPolygon): VorPolygon[] {
 		let out: VorPolygon[] = [];
 		for ( let id of pol.neighborsId) {
-			const n: VorPolygon | undefined = this._polygons.find( (p) => p.id === id );
+			const n: VorPolygon | undefined = this._polygons.get(id)
 			if (n) 
 				out.push(n);
 			else 
@@ -57,18 +61,22 @@ export default class VorDiagram {
 	}
 
 	getPolygonFromPoint(p: Point): VorPolygon {
-		let out: VorPolygon = this._polygons[0];
-		let lrg: number = this._polygons.length, minDis: number = Infinity;
+		let out: VorPolygon | undefined;
+		let lrg: number = this._polygons.size, minDis: number = Infinity;
 
-		for (let i=0; i<lrg; i++) {
-			let c: Point = this._polygons[i].center;
+		this._polygons.forEach( (vp: VorPolygon) => {
+			let c: Point = vp.center;
 			let dis: number = Point.distance(c,p);
 			if (dis < minDis) {
-				out = this._polygons[i];
+				out = vp;
 				minDis = dis;
 			}
+		})
+		if (out)
+			return out;
+		else {
+			throw new Error('no se encontro polygon');
 		}
-		return out;
 	}
 
 }
