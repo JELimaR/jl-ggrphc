@@ -4,7 +4,7 @@ import Map from './Map';
 console.log('init');
 const map: Map = new Map({
 	seed: 184, 
-	cant: 100000,
+	cant: 50000,
 	pathName: __dirname + '/../test.png', 
 	rel: 2 });
 console.log('voronoi diagram created');

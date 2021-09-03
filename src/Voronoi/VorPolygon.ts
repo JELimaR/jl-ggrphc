@@ -27,7 +27,7 @@ type TypeHeight =
 export default class VorPolygon {
 
 	private _cell: Cell;
-	private _height: number = -1;
+	private _height: number = 0;
 	private _typeHeight: TypeHeight = 'water';
 	private _mark: boolean = false;
 
