@@ -1,12 +1,29 @@
 
 import Map from './Map';
+import VoronoiDiagramCreator from './Voronoi/VoronoiDiagramCreator';
 
+const cant = 100;
 console.log('init');
-const map: Map = new Map({
+let vdc: VoronoiDiagramCreator = Map.createVoronoi({
 	seed: 184, 
-	cant: 50000,
-	pathName: __dirname + '/../test.png', 
-	rel: 2 });
+	cant: cant*1000,
+	rel: 2 }
+);
 console.log('voronoi diagram created');
-map.generateHeigh(17);
-map.drawHeighmap(true);
+
+const gs: number[] = [414,58]
+const hw: boolean = false;
+
+for (let seed of gs) {
+	const genSeed: number = seed;
+	const map = new Map(
+		vdc.diagram,
+		__dirname + `/../test/test${cant}${hw ? 'w' : 'h'}/${genSeed}.png`
+	);
+	map.generateHeigh(genSeed);
+	map.drawHeighmap(hw);
+}
+
+
+
+

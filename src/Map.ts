@@ -4,49 +4,44 @@ import VoronoiDiagramCreator from './Voronoi/VoronoiDiagramCreator';
 import RandomNumberGenerator from './Geom/RandomNumberGenerator'
 import VorDiagram from './Voronoi/VorDiagram';
 import VorPolygon from './Voronoi/VorPolygon';
+import IslandCenters from './IslandCenters';
 
-interface IMapConstructorEntry {
+interface IVoronoiConstructorEntry {
 	seed: number;
 	rel: number;
-	pathName: string;
 	cant: number
 }
 
 export default class Map {
-	private _seed: number;
-	private _SIZE: Vector = new Vector( {x: 3600, y: 1800} );
+	static _SIZE: Vector = new Vector( {x: 3600, y: 1800} );
+
 	private _diagram: VorDiagram;
 	private _oc: OCanvas; // usar canvas distintos?
 	// private _rndInt: (N: number) => number; // no es necesario
 	// private _rnd: () => number;
 
-	constructor(entry: IMapConstructorEntry) {
-		this._seed = entry.seed;
+	constructor(diag: VorDiagram, pathName: string) {
+		
+		this._diagram = diag;
 
-		const vdc: VoronoiDiagramCreator = new VoronoiDiagramCreator(this._SIZE, this._seed, entry.cant);
+		this._oc = new OCanvas(Map._SIZE);
+		this._oc.saveDraw( pathName );
+	}
+
+	static createVoronoi(entry: IVoronoiConstructorEntry): VoronoiDiagramCreator {
+
+		const vdc: VoronoiDiagramCreator = new VoronoiDiagramCreator(Map._SIZE, entry.seed, entry.cant);
 		vdc.createDiagram( entry.rel );
-		this._diagram = vdc.diagram;
-
-		this._oc = new OCanvas(this._SIZE);
-		this._oc.saveDraw( entry.pathName );
+		return vdc;
 	}
 
 	generateHeigh(otherSeed: number) {
 		console.log('generating heighmap');
-
 		const rnd = RandomNumberGenerator.makeRandomFloat(otherSeed);
 
-		let centers: { p: Point, r: number, h: number}[] = [];
-		// for (let i=0;i<28;i++) {
-		for (let i=0;i<40;i++) {
-			centers.push({
-				p: new Point( 3000*rnd()+300, 1200*rnd()+200 ),
-				r: 420+2677*rnd(),
-				h: 0.5 + 0.5*rnd()
-			})
-		}
+		let centers: { indx: number, p: Point, r: number, h: number}[] = IslandCenters(rnd);
 		for (let c of centers) {
-			console.log( c)
+			console.log(c.indx, c)
 			let center: VorPolygon = this._diagram.getPolygonFromPoint( c.p );
 			this.addIsland(
 				RandomNumberGenerator.makeRandomFloat(otherSeed),
