@@ -2,6 +2,7 @@ import { Cell, Edge, Halfedge } from "voronoijs";
 import Point from '../Geom/Point'
 
 import chroma from 'chroma-js';
+import * as turf from '@turf/turf';
 const colorScale = chroma.scale('Spectral').domain([1,0]);
 
 /**
@@ -28,6 +29,7 @@ export default class VorPolygon {
 
 	private _cell: Cell;
 	private _height: number = 0;
+	private _prevHeight: number = -1;
 	private _typeHeight: TypeHeight = 'water';
 	private _mark: boolean = false;
 
@@ -64,8 +66,12 @@ export default class VorPolygon {
 
 	get cell(): Cell { return this._cell }
 
-	set height(h: number) {this._height = h;}
+	set height(h: number) {
+		this._prevHeight = this._height;
+		this._height = h;
+	}
 	get height(): number {return this._height}
+	get prevHeight(): number {return this._prevHeight}
 
 	drawH(ctx: CanvasRenderingContext2D, drawHeightWater: boolean = false): void {
 		const h: number = (this._typeHeight === 'water' && !drawHeightWater)
@@ -97,6 +103,10 @@ export default class VorPolygon {
 		}
         ctx.closePath();
     }
+
+	// toTurf(): turf.Feature<turf.Polygon> {
+		
+	// }
 
 	static equals(a: VorPolygon, b: VorPolygon): boolean {
 		return (a._cell.site.id === b._cell.site.id)

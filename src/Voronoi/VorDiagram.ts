@@ -62,7 +62,7 @@ export default class VorDiagram {
 
 	getPolygonFromPoint(p: Point): VorPolygon {
 		let out: VorPolygon | undefined;
-		let lrg: number = this._polygons.size, minDis: number = Infinity;
+		let minDis: number = Infinity;
 
 		this._polygons.forEach( (vp: VorPolygon) => {
 			let c: Point = vp.center;

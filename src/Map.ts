@@ -4,7 +4,8 @@ import VoronoiDiagramCreator from './Voronoi/VoronoiDiagramCreator';
 import RandomNumberGenerator from './Geom/RandomNumberGenerator'
 import VorDiagram from './Voronoi/VorDiagram';
 import VorPolygon from './Voronoi/VorPolygon';
-import IslandCenters from './IslandCenters';
+import IslandCenters from './CentersGenerator';
+import { makeNoise2D } from 'fast-simplex-noise';
 
 interface IVoronoiConstructorEntry {
 	seed: number;
@@ -39,7 +40,7 @@ export default class Map {
 		console.log('generating heighmap');
 		const rnd = RandomNumberGenerator.makeRandomFloat(otherSeed);
 
-		let centers: { indx: number, p: Point, r: number, h: number}[] = IslandCenters(rnd);
+		let centers: { indx: number, p: Point, r: number, h: number, addH: boolean}[] = IslandCenters(rnd);
 		for (let c of centers) {
 			console.log(c.indx, c)
 			let center: VorPolygon = this._diagram.getPolygonFromPoint( c.p );
@@ -47,16 +48,34 @@ export default class Map {
 				RandomNumberGenerator.makeRandomFloat(otherSeed),
 				center,
 				c.r,
-				c.h
+				c.h,
+				c.addH,
 			);
 		}
-		console.log(centers);
 	}
 
-	addIsland(rnd: ()=>number, polStart: VorPolygon, radio: number, peakH: number): void {
-		const limit: number = 0.01;
+	smoothHeight() {
+		this._diagram.forEachPolygon((p: VorPolygon) => {
+			p.mark = true;
+			let ht: number = 0;
+			let ns: VorPolygon[] = this._diagram.getNeighbors(p)
+			ns.forEach((n: VorPolygon) => {
+				if (n.mark) {
+					ht = ht + n.prevHeight;
+				} else {
+					ht = ht + n.height;
+				}
+			})
+			p.height = (p.height+ht)/(ns.length+1);
+		})
+		this._diagram.forEachPolygon((p: VorPolygon) => {
+			p.mark = false;
+		})
+	}
+
+	addIsland(rnd: ()=>number, polStart: VorPolygon, radio: number, peakH: number, addH: boolean): void {
 		// decr per km
-		const decr: number = Math.exp(Math.log(limit)/radio);
+		const decr: number = Math.exp(Math.log(0.01)/radio);
 		// qeue
 		interface QItem {
 			h: number;
@@ -67,73 +86,23 @@ export default class Map {
 		polStart.mark = true;
 		for (let i = 0; i<qeue.length; i++) {
 			const {p: pol, h}: QItem = qeue[i];
-			pol.height = h + pol.height;
-			if (pol.height > 1) pol.height = 1;
+			if (!(addH && (pol.typeHeight === 'water')))
+				pol.height = h + pol.height;
 			if (pol.height > 0.2) pol.typeHeight = 'land';
-			if (h > limit) {
+			if (h > 0.01) {
 				this._diagram.getNeighbors(pol).forEach((n: VorPolygon) => {
 					if (!n.mark) {
 						const parentDis: number = Point.geogDistance( n.center, pol.center );
-						const height: number = Math.pow(decr, parentDis) * h  * (rnd()*0.2+0.9);
+						const height: number = Math.pow(decr, parentDis) * h  * (rnd()*0.1+0.95);
 						qeue.push({h: height, p: n});
 						n.mark = true;
 					}
 				});
 			}
-			if (i % 1000 === 0)
-				console.log(i, h);
 		}
 		for (let i = 0; i<qeue.length; i++) {
 			qeue[i].p.mark = false;
 		}
-	}
-
-	addIslandDepracted(rnd: ()=>number, polStart: VorPolygon, radio: number, peakH: number): void {
-
-		const decr: number = Math.exp(-4.5/radio);
-		// start island
-		polStart.height = peakH;
-		polStart.mark = true;
-		polStart.typeHeight = 'land';
-		console.log(polStart);
-		// qeue
-		let que: {currh: number, currP: VorPolygon}[] = [{currh: peakH, currP: polStart}];
-		let dismark: VorPolygon[] = [];
-
-		while ( que.length !== 0 ) {
-			const qe = que.shift();
-			if (qe) {
-				const currh: number = qe.currh;
-				const currP: VorPolygon = qe.currP;
-				
-				dismark.push(currP);
-				if (dismark.length % 1000 === 0) 
-					console.log(dismark.length, currh);
-				
-				this._diagram.getNeighbors(currP).forEach( (n: VorPolygon) => {
-					if ( !n.mark ) {
-						n.mark = true;
-
-						const parentDis: number = Point.geogDistance( n.center, currP.center );
-						const h: number = Math.pow(decr, parentDis) * currh/* * (0.2*rnd() + 0.9)*/
-						
-						n.height = n.height + h;
-
-						if (n.height > 1) 
-							n.height = 1
-						if (n.height > 0.2)
-							n.typeHeight = 'land';
-						if ( h > 0.01 ) {
-							que.push({currh: h, currP: n});
-						}
-					}	
-				})
-			}
-		}
-
-		dismark.forEach((p: VorPolygon) => {
-			p.mark = false;
-		})
 	}
 
 	drawHeighmap(drawHeighWater: boolean): void {

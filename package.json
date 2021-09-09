@@ -29,6 +29,7 @@
     "@turf/turf": "^6.5.0",
     "canvas": "^2.8.0",
     "chroma-js": "^2.1.2",
+    "fast-simplex-noise": "^4.0.0",
     "voronoijs": "^1.0.0"
   }
 }
