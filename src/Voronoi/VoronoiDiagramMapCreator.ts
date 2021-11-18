@@ -1,11 +1,11 @@
-import { Voronoi, BoundingBox, Site, Cell } from 'voronoijs';
+import { Voronoi, BoundingBox, Site, Cell, Diagram, Edge, Vertex } from 'voronoijs';
 
 import JDiagram from './JDiagram';
 
 export default class VoronoiDiagramMapCreator {
 
     static createDiagram(sites: Site[], rel: number = 0 ): JDiagram {
-
+        console.time('compute')
 		let bbox: BoundingBox = {xl: -180, xr: 180, yt: -90, yb: 90};
 		let vor = new Voronoi();
 		//let sites = VoronoiDiagramMapCreator.randomSites( seed, n)
@@ -16,8 +16,9 @@ export default class VoronoiDiagramMapCreator {
 			sites = VoronoiDiagramMapCreator.improveSites(diagram.cells);
 			diagram = vor.compute( sites, bbox );
 		}
+        console.timeEnd('compute')
 
-		return new JDiagram(diagram)
+        return new JDiagram(diagram);
     }
 
     private static improveSites(cells: Cell[]): Site[] {

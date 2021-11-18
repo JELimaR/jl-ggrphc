@@ -9,36 +9,47 @@ export default class JMap {
 
     constructor(d: JDiagram) {
         this._diagram = d;
-        // asignar mar prof
+		this.smoothHeight();
+		this.smoothHeight();
+		this.smoothHeight();
     }
 
-    generateHeigh(otherSeed: number) {
-		console.log('generating heighmap');
-		const rnd = RandomNumberGenerator.makeRandomFloat(otherSeed);
+    private generateHeigh(otherSeed: number) {
+		// console.log('generating heighmap');
+		// const rnd = RandomNumberGenerator.makeRandomFloat(otherSeed);
 
-		this.smoothHeight();
+		// this.smoothHeight();
+		// this.smoothHeight();
 		// this._diagram.setMaxHeight();
 		// this.setBorderHeigh();
 
 	}
 
 	private smoothHeight() {
-		/*this._diagram.forEachCell((c: JCell) => {
-			c.mark = true;
-			let ht: number = 0;
-			let ns: JCell[] = this._diagram.getNeighbors(p)
+		this._diagram.forEachCell((c: JCell) => {
+
+			c.mark();
+			let ht: number = c.height;
+			let cant: number = 1;
+			let ns: JCell[] = this._diagram.getNeighbors(c)
 			ns.forEach((n: JCell) => {
-				if (n.mark) {
-					ht = ht + n.prevHeight;
+				cant++;
+				if (n.isLand) {
+					if (n.isMarked()) {
+						ht += n.prevHeight;
+					} else {
+						ht += n.height;
+					}
 				} else {
-					ht = ht + n.height;
+					ht += 0.15;
 				}
 			})
-			c.height = (c.height+ht)/(ns.length+1);
+			c.height = ht/cant;
+
 		})
 		this._diagram.forEachCell((c: JCell) => {
-			c.mark = false;
-		})*/
+			c.dismark();
+		})
 	}
 
 	private addIsland(rnd: ()=>number, polStart: JCell, radio: number, peakH: number, addH: boolean): void {
@@ -75,7 +86,7 @@ export default class JMap {
         */
 	}
 
-	generateMoisture(): void {
+	private generateMoisture(): void {
 		console.log('generating moisture');
 	}
 

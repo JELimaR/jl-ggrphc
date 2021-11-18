@@ -29,7 +29,7 @@ export default class JEdge {
 		this._vertexB = vb;
 	}
 
-	get originalPointerEdge(): Edge { return this._edge}
+	// get diagramId(): string { return this._id}
 
 	get lSite(): JSite {return this._lSite}
 	get rSite(): JSite | undefined {return this._rSite}
@@ -46,7 +46,7 @@ export default class JEdge {
 				this._vertexA.toTurfPosition(),
 			]])
 		} else {
-			throw new Error('No existe diamond para para edge sin rSite');
+			throw new Error('No existe diamond para un edge sin rSite');
 		}
 	}
 
@@ -68,6 +68,34 @@ export default class JEdge {
 		return out;
 	}
 	
+}
+
+export const edgeNoisePoints = (edge: Edge): JPoint[] => {
+	let out: JPoint[] = [];
+	if (edge.rSite) {
+		const randf: () => number = RandomNumberGenerator.makeRandomFloat(edge.rSite.id);
+		const pointsList: turf.Position[] = noiseTraceLine(
+			[[edge.va.x, edge.va.y], [edge.vb.x, edge.vb.y]],
+			constructDiamond(edge),
+			randf
+		);
+		pointsList.forEach((element: turf.Position) => {
+			out.push( new JPoint( element[0], element[1] ) )
+		})
+	}  else {
+		out = [JPoint.fromVertex(edge.va), JPoint.fromVertex(edge.vb)];
+	}
+	return out;
+}
+
+const constructDiamond = (edge: Edge): turf.Feature<turf.Polygon> => {
+	return turf.polygon([[
+		[edge.va.x, edge.va.y],
+		[edge.lSite.x, edge.lSite.y],
+		[edge.vb.x, edge.vb.y],
+		[edge.rSite.x, edge.rSite.y],
+		[edge.va.x, edge.va.y],
+	]]);
 }
 
 export const noiseTraceLine = (pin: turf.Position[], diamond: turf.Feature<turf.Polygon>, randf: () => number): turf.Position[] => {

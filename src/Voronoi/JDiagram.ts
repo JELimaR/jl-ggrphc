@@ -3,21 +3,23 @@ import JPoint, {JVector} from '../Geom/JPoint';
 import JCell from "./JCell";
 import JEdge from "./JEdge";
 import JSite from './JSite';
+import fs from 'fs';
+import { IJCellInformation } from './JCell';
 
 
 export default class JDiagram {
-	private _diagram: Diagram;
+	// private _diagram: Diagram;
     private _cells: Map<number, JCell>  = new Map<number, JCell>();
 	private _vertices: JPoint[] = [];
 	private _edges: JEdge[] = []; //cambiar
 
     constructor( d: Diagram ) {
-		this._diagram = d;
-		// setear sites para usar despues
+		console.log('Setting JDiagram values')
+		console.time('set JDiagram values');
 		let sites: Map<number, JSite> = new Map<number, JSite>();
         d.cells.forEach( (c: Cell) => {
-			const Js: JSite = new JSite(c.site);
-			sites.set(Js.id,Js);
+			const js: JSite = new JSite(c.site);
+			sites.set(js.id,js);
 		});
 		// setear vertices
 		let verticesMap = new Map<Vertex, JPoint>();
@@ -50,24 +52,29 @@ export default class JDiagram {
 		})
 		
 		// setear cells
+		const loadedInfo: IJCellInformation[] = loadCellsInfo(d.cells.length);
         d.cells.forEach( (c: Cell) => {
-			const Js: JSite = sites.get(c.site.id) as JSite;
+			const js: JSite = sites.get(c.site.id) as JSite;
 			let arrEdges: JEdge[] = [];
 
 			c.halfedges.forEach( (he: Halfedge) => {
 				const aux = he.edge;
-				const Je: JEdge = edgesMap.get(aux) as JEdge;
-				arrEdges.push(Je)
+				const je: JEdge = edgesMap.get(aux) as JEdge;
+				arrEdges.push(je)
 			})
+
+			const info: IJCellInformation | undefined = loadedInfo[c.site.id];
 				
-			const cell = new JCell(c, Js, arrEdges)
-			this._cells.set(Js.id, cell);
+			const cell = new JCell(c, js, arrEdges, info);
+			this._cells.set(js.id, cell);
 		});
 		
+		if (loadedInfo.length === 0)
+			saveCellsInfo( this._cells);
 		
+		console.timeEnd('set JDiagram values');
     }
 
-	get diagram(): Diagram {return this._diagram}
 	get sites(): JSite[] {
 		let out: JSite[] = [];
 		this._cells.forEach((c: JCell) => {
@@ -103,7 +110,7 @@ export default class JDiagram {
 		return out;
 	}
 
-	getCellFromPoint(p: JPoint): JCell {
+	private getCellFromPoint(p: JPoint): JCell {
 		let out: JCell | undefined;
 		let minDis: number = Infinity;
 
@@ -121,4 +128,24 @@ export default class JDiagram {
 			throw new Error('no se encontro polygon');
 		}
 	}
+}
+
+const loadCellsInfo = (c: number): IJCellInformation[] => {
+	let out: IJCellInformation[] = [];
+	try {
+		let pathName: string = __dirname + `/../../test/CellsInfo${c}.json`;
+		out = JSON.parse(fs.readFileSync(pathName).toString());
+	} catch (e) {
+		
+	}
+	return out;
+}
+
+const saveCellsInfo = (mapCells: Map<number,JCell>): void => {
+	let pathName: string = __dirname + `/../../test/CellsInfo${mapCells.size}.json`;
+	let data: IJCellInformation[] = [];
+	mapCells.forEach( (cell: JCell) => {
+		data[cell.id] = cell.info;
+	})
+	fs.writeFileSync(pathName, JSON.stringify(data));
 }

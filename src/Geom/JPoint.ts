@@ -1,4 +1,5 @@
 import * as turf from '@turf/turf'
+import { Vertex } from 'voronoijs';
 
 export default class JPoint {
 	private _x: number;
@@ -16,11 +17,11 @@ export default class JPoint {
 		return new JPoint( a._x + b._x, a._y + b._y );
 	}
 
-	scale(k: number): JPoint {
+	private scale(k: number): JPoint {
 		return new JPoint( this._x * k, this._y * k);
 	}
 
-	translate( dir: JVector ) {
+	private translate( dir: JVector ) {
 		this._x = dir.x + this._x;
 		this._y = dir.y + this._y;
 	}
@@ -36,11 +37,15 @@ export default class JPoint {
 		return Math.sqrt( Math.pow(a._x-b._x, 2) + Math.pow(a._y-b._y, 2) );
 	}
 
-	static fromTurf(position: turf.Position): JPoint {
+	static fromTurfPosition(position: turf.Position): JPoint {
 		return new JPoint(position[0], position[1]);
 	}
 
-	toTurfPoint(): turf.Feature<turf.Point> {
+	static fromVertex(v: Vertex): JPoint {
+		return new JPoint(v.x, v.y);
+	}
+
+	private toTurfPoint(): turf.Feature<turf.Point> {
 		return turf.point( [this._x, this._y] );
 	}
 

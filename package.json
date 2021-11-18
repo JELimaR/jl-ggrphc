@@ -4,6 +4,9 @@
   "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "nodemonConfig": {
+    "ignore": ["*.json"]
+  },
   "scripts": {
     "init-config": "npm install",
     "build": "tsc",
