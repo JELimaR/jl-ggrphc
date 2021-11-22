@@ -111,6 +111,7 @@ export default class JDiagram {
 	}
 
 	private getCellFromPoint(p: JPoint): JCell {
+		// se puede verificar si el punto se encuentra en la cell
 		let out: JCell | undefined;
 		let minDis: number = Infinity;
 
@@ -125,7 +126,7 @@ export default class JDiagram {
 		if (out)
 			return out;
 		else {
-			throw new Error('no se encontro polygon');
+			throw new Error('no se encontro cell');
 		}
 	}
 }

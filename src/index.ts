@@ -23,28 +23,40 @@ let pathName: string = __dirname + `/../test/${2}.png`;
 let dm: DrawerMap = new DrawerMap(SIZE);
 dm.saveDraw( pathName );
 
-dm.drawCell([
-	new JPoint(-200,-100),
-	new JPoint( 200,-100),
-	new JPoint( 200, 100),
-	new JPoint(-200, 100),
-	new JPoint(-200,-100),
-], '#FFFFFF')
-const zoom: number = 20;
+dm.draw({
+	points: [
+		new JPoint(-200,-100),
+		new JPoint( 200,-100),
+		new JPoint( 200, 100),
+		new JPoint(-200, 100),
+		new JPoint(-200,-100),
+	],
+	strokeColor: '#FFFFFF',
+	fillColor: 'none'
+})
+const zoom: number = 10;
 dm.setZoom(zoom);
-const cx: number = 4.5;
-const cy: number = -23.5;
+const cx: number = -106;
+const cy: number = 40;
 dm.setCenterpan(new JPoint(cx, cy))
 
-const polContainer = turf.polygon([dm.pointsBuffPanZoom]);
+const polContainer = turf.polygon([dm.getPointsBuffDrawLimits()]);
 let polJP: JPoint[] = [];
 polContainer.geometry.coordinates[0].forEach((coords) => {
 	polJP.push(new JPoint(coords[0], coords[1]));
 })
+const polCenter = turf.polygon([dm.getPointsBuffCenterLimits()]);
+let pointsPolCenter: JPoint[] = [];
+polCenter.geometry.coordinates[0].forEach((coords) => {
+	pointsPolCenter.push(new JPoint(coords[0], coords[1]));
+})
+
+console.log('center')
+console.log(dm.getPanzoom().centerX, dm.getPanzoom().centerY)
 // 200 mil - 1 min
 // 400 mil - 2 mins
 // max: 600 3 mins
-const TOTAL: number = 700;
+const TOTAL: number = 50;
 
 console.log('init voronoi');
 console.time('voronoi');
@@ -64,14 +76,11 @@ console.time('draw cells');
 // let areas: number[] = [];
 diagram.cells.forEach((c: JCell) => {	
 	if (!turf.booleanDisjoint(polContainer, c.toTurfPolygonSimple())) {
-		// let color: string = colorScale(c.height).hex();
 		let color: string = c.isLand ? colorScale(c.height).hex() : colorScale(0.05).hex();
-		// if (zoom >= 10) dm.drawCell(c.allVertices, color); //cambiar nombre
-		// else dm.drawCell(c.voronoiVertices, color); //cambiar nombre
 		const points: JPoint[] = (zoom >= 10) ? c.allVertices : c.voronoiVertices;
 		dm.draw({
 			points,
-			strokeColor: color,
+			strokeColor: '#A84311',
 			fillColor: color
 		});
 		// areas.push(c.area);
@@ -84,24 +93,6 @@ diagram.cells.forEach((c: JCell) => {
 // console.log('prom', sum/areas.length)
 console.log(diagram.cells.length)
 console.timeEnd('draw cells')
-
-// diagram.edges.forEach((ve: JEdge) => {
-// 	const l = turf.lineString([ve.vertexA.toTurfPosition(), ve.vertexB.toTurfPosition()])
-// 	if (!turf.booleanDisjoint(polContainer, l)) {
-// 		const points: JPoint[] = (zoom >= 10) ? ve.points : [ve.vertexA, ve.vertexB];
-// 		dm.draw({
-// 			points,
-// 			strokeColor: '#FF0000',
-// 			fillColor: 'none'
-// 		});
-// 	}
-// })
-
-// LandRegs.forEach((element: turf.Feature<turf.Polygon>) => {
-// 	let verts: JPoint[] = [];
-// 	element.geometry.coordinates[0].forEach(pos => {verts.push(new JPoint(pos[0], pos[1]))})
-// 	oc.drawLine(verts, '#000000')
-// });
 
 /*
 diagram.diagram.edges.forEach((e: Edge) => {
@@ -139,3 +130,10 @@ console.log('promedio resto', Math.round((total-landZones)/(diagram.cells.length
 console.log('cantidad resto',(diagram.cells.length-cantlandZones))
 
 console.timeEnd('all');
+
+dm.draw({
+	points: pointsPolCenter,
+	strokeColor: '#FF0000',
+	fillColor: '#FF000025'
+})
+console.log(pointsPolCenter)

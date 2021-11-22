@@ -37,12 +37,6 @@ export default class JCell {
 			this._halfedges.push(Jhe);
 		})
 		this._cellInformation = new JCellInformation(this, info);
-		// crear funcion que determine si es o no land
-		/*for(let i=0; i<LandRegs.length && !this._inz; i++) { // ineficiente
-			// console.log(areaArrReg(intersectTurfPolygon(LandRegs[i], turfPol)))
-			// console.log(this.area);
-			this._inz = 0.5 < areaArrReg(intersectTurfPolygon(LandRegs[i], turfPol))/this.area
-		}*/
 	}
 
 	get info(): IJCellInformation {return this._cellInformation.getInterface()}
