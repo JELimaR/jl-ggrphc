@@ -1,4 +1,4 @@
-import { numberLiteralTypeAnnotation } from '@babel/types';
+
 import { createCanvas } from 'canvas';
 import fs from 'fs';
 
@@ -61,21 +61,21 @@ export class Panzoom {
 		if (this._centerY < minCenterY) this._centerY = minCenterY;
 	}
 
-	convertPointToDrawer(p: JPoint): number[] {
-		return [
+	convertPointToDrawer(p: JPoint): JPoint {
+		return new JPoint(
 			p.x*this.scale + this._centerX,
 			p.y*this.scale + this._centerY
-		];
+		);
 	}
 
-	convertDrawerToPoint(p: number[]): number[] {
-		return [
+	convertDrawerToPoint(p: number[]): JPoint {
+		return new JPoint(
 			(p[0] - this._centerX)/this.scale,
 			(p[1] - this._centerY)/this.scale,
-		]
+		);
 	}
 
-	get pointsBuffDrawLimits(): number[][] {
+	get pointsBuffDrawLimits(): JPoint[] {
 		const a = this.convertDrawerToPoint([0,0]);
 		const b = this.convertDrawerToPoint([0,this._elementSize.y]);
 		const c = this.convertDrawerToPoint([this._elementSize.x,this._elementSize.y]);
@@ -83,21 +83,38 @@ export class Panzoom {
 		return [a,b,c,d,a]
 	}
 
-	get pointsBuffCenterLimits(): number[][] {
+	get pointsBuffCenterLimits(): JPoint[] {
 		let minCenterX = this._elementSize.x/2 * (1 - (this._zoom-1) * (+1));
 		let maxCenterX = this._elementSize.x/2 * (1 - (this._zoom-1) * (-1));
 		let minCenterY = this._elementSize.y/2 * (1 - (this._zoom-1) * (+1));
 		let maxCenterY = this._elementSize.y/2 * (1 - (this._zoom-1) * (-1));
-		// drawer to point asuming center in 1800-900
-		const a = [
-			(minCenterX-this._elementSize.x/2)/this.scale, (minCenterY-this._elementSize.y/2)/this.scale
-		];
-		const b = [(minCenterX-this._elementSize.x/2)/this.scale, (maxCenterY-this._elementSize.y/2)/this.scale];
-		const c = [(maxCenterX-this._elementSize.x/2)/this.scale, (maxCenterY-this._elementSize.y/2)/this.scale];
-		const d = [(maxCenterX-this._elementSize.x/2)/this.scale, (minCenterY-this._elementSize.y/2)/this.scale];
+		// drawer to point asuming center in size/2
+		const a = new JPoint(
+			(minCenterX-this._elementSize.x/2)/this.scale,
+			(minCenterY-this._elementSize.y/2)/this.scale
+		);
+		const b = new JPoint(
+			(minCenterX-this._elementSize.x/2)/this.scale,
+			(maxCenterY-this._elementSize.y/2)/this.scale
+		);
+		const c = new JPoint(
+			(maxCenterX-this._elementSize.x/2)/this.scale,
+			(maxCenterY-this._elementSize.y/2)/this.scale
+		);
+		const d = new JPoint(
+			(maxCenterX-this._elementSize.x/2)/this.scale,
+			(minCenterY-this._elementSize.y/2)/this.scale
+		);
 
-		return [a,b,c,d,a];
-		
+		return [a,b,c,d,a];		
+	}
+
+	getPanXRange(): number {
+		return this.pointsBuffCenterLimits[2].x - this.pointsBuffCenterLimits[1].x;
+	}
+
+	getPanYRange(): number {
+		return this.pointsBuffCenterLimits[1].y - this.pointsBuffCenterLimits[0].y;
 	}
 
 }
@@ -122,17 +139,19 @@ export default class DrawerMap {
 		this._panzoom.zoom = n;
 	}
 
+	getZoomValue(): number {return this._panzoom.zoom}
+
 	setCenterpan(p: JPoint) {
-		this._centerPoint = new JPoint(p.x,p.y)
+		this._centerPoint = new JPoint(p.x,p.y);
 		this._panzoom.centerX = -p.x*this._panzoom.scale + this._size.x/2;
 		this._panzoom.centerY = -p.y*this._panzoom.scale + this._size.y/2;
 	}
 
-	getPointsBuffDrawLimits(): number[][] {
-		return this._panzoom.pointsBuffDrawLimits
+	getPointsBuffDrawLimits(): JPoint[] {
+		return this._panzoom.pointsBuffDrawLimits;
 	}
 
-	getPointsBuffCenterLimits(): number[][] {
+	getPointsBuffCenterLimits(): JPoint[] {
 		return this._panzoom.pointsBuffCenterLimits;
 	}
 
@@ -149,11 +168,11 @@ export default class DrawerMap {
 
         this.context.beginPath();
 
-		const initialPoint: number[] = this._panzoom.convertPointToDrawer(ent.points[len-1]);
-        //this.context.moveTo(initialPoint[0], initialPoint[1]);
+		const initialPoint: JPoint = this._panzoom.convertPointToDrawer(ent.points[len-1]);
+        //this.context.moveTo(initialPoint.x, initialPoint.y);
         for (let vert of ent.points) {
-			const coords: number[] = this._panzoom.convertPointToDrawer(vert);
-            this.context.lineTo(coords[0], coords[1]);
+			const vertex: JPoint = this._panzoom.convertPointToDrawer(vert);
+            this.context.lineTo(vertex.x, vertex.y);
         }
 
 		this.context.strokeStyle = ent.strokeColor;
