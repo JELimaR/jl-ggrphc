@@ -8,8 +8,7 @@ import * as turf from '@turf/turf';
 const colorScale = chroma.scale('Spectral').domain([1,0]);
 
 
-
-export default class JMap {
+export default class JWorldMap {
 
     private _diagram: JDiagram;
 
@@ -49,11 +48,11 @@ export default class JMap {
 		console.log('generating moisture');
 	}
 
-	drawHeigh(dm: DrawerMap) {
+	drawHeight(dm: DrawerMap) {
 		const polContainer = turf.polygon(
 			[dm.getPointsBuffDrawLimits().map((p: JPoint) => {return p.toTurfPosition()})]
 		);
-		const zoom = dm.getZoomValue();
+		const zoom = dm.zoomValue;
 		this._diagram.cells.forEach((c: JCell) => {	
 			if (!turf.booleanDisjoint(polContainer, c.toTurfPolygonSimple())) {
 				let color: string = c.isLand ? colorScale(c.height).hex() : colorScale(0.05).hex();
@@ -62,6 +61,24 @@ export default class JMap {
 					points,
 					strokeColor: color,
 					fillColor: color
+				});
+			}
+		})
+	}
+
+	drawCells(dm: DrawerMap) {
+		const polContainer = turf.polygon(
+			[dm.getPointsBuffDrawLimits().map((p: JPoint) => {return p.toTurfPosition()})]
+		);
+		const zoom = dm.zoomValue;
+		this._diagram.cells.forEach((c: JCell) => {	
+			if (!turf.booleanDisjoint(polContainer, c.toTurfPolygonSimple())) {
+				let color: string = c.isLand ? colorScale(c.height).hex() : colorScale(0.05).hex();
+				const points: JPoint[] = (zoom >= 8) ? c.allVertices : c.voronoiVertices;
+				dm.draw({
+					points,
+					strokeColor: '#F50508',
+					fillColor: '#FFFFFF'
 				});
 			}
 		})

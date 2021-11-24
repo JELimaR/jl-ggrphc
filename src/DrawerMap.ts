@@ -11,7 +11,7 @@ export interface IDrawEntry {
 	drawType?: 'line' | 'polygon'
 }
 
-export class Panzoom {
+export class JPanzoom {
 	private _zoom: number;
 	private _centerX: number;
 	private _centerY: number;
@@ -31,9 +31,10 @@ export class Panzoom {
 		this._centerY = this._elementSize.y/2;
 	}
 
+	get zoom(): number {return this._zoom}
 	set zoom(n: number) {
-		if (n >= 0 && n === Math.round(n)) {
-			this._zoom = Math.pow(1.25,n);
+		if (n >= 0 && n === Math.round(n) && n <= 20) {
+			this._zoom = Math.pow(1.25, n);
 		}
 		this.calculateCenter();
 	}
@@ -60,26 +61,26 @@ export class Panzoom {
 		if (this._centerX < minCenterX) this._centerX = minCenterX;
 		if (this._centerY < minCenterY) this._centerY = minCenterY;
 	}
-
+	// convertGeoJPointToDrawerJPoint
 	convertPointToDrawer(p: JPoint): JPoint {
 		return new JPoint(
 			p.x*this.scale + this._centerX,
 			p.y*this.scale + this._centerY
 		);
 	}
-
-	convertDrawerToPoint(p: number[]): JPoint {
+	// convertDrawerJPointToGeoJPoint
+	convertDrawerToPoint(p: JPoint): JPoint {
 		return new JPoint(
-			(p[0] - this._centerX)/this.scale,
-			(p[1] - this._centerY)/this.scale,
+			(p.x - this._centerX)/this.scale,
+			(p.y - this._centerY)/this.scale,
 		);
 	}
 
 	get pointsBuffDrawLimits(): JPoint[] {
-		const a = this.convertDrawerToPoint([0,0]);
-		const b = this.convertDrawerToPoint([0,this._elementSize.y]);
-		const c = this.convertDrawerToPoint([this._elementSize.x,this._elementSize.y]);
-		const d = this.convertDrawerToPoint([this._elementSize.x,0]);
+		const a = this.convertDrawerToPoint(new JPoint(0,0));
+		const b = this.convertDrawerToPoint(new JPoint(0,this._elementSize.y));
+		const c = this.convertDrawerToPoint(new JPoint(this._elementSize.x,this._elementSize.y));
+		const d = this.convertDrawerToPoint(new JPoint(this._elementSize.x,0));
 		return [a,b,c,d,a]
 	}
 
@@ -109,12 +110,12 @@ export class Panzoom {
 		return [a,b,c,d,a];		
 	}
 
-	getPanXRange(): number {
-		return this.pointsBuffCenterLimits[2].x - this.pointsBuffCenterLimits[1].x;
+	getXstep(): number {
+		return Math.abs(this.pointsBuffDrawLimits[2].x - this.pointsBuffCenterLimits[1].x)/5;
 	}
 
-	getPanYRange(): number {
-		return this.pointsBuffCenterLimits[1].y - this.pointsBuffCenterLimits[0].y;
+	getYstep(): number {
+		return Math.abs(this.pointsBuffDrawLimits[1].y - this.pointsBuffCenterLimits[0].y)/5;
 	}
 
 }
@@ -124,25 +125,30 @@ export default class DrawerMap {
 	private _size: JVector;
 	private _cnvs: any;
 
-	private _panzoom: Panzoom;
-	private _centerPoint: JPoint;
+	private _panzoom: JPanzoom;
 
 	constructor(SIZE: JVector) {
 		this._size = SIZE;
 		this._cnvs = createCanvas(SIZE.x, SIZE.y);
 
-		this._panzoom = new Panzoom(this._size);
-		this._centerPoint = new JPoint(0,0);
+		this._panzoom = new JPanzoom(this._size);
+	}
+
+	get centerPoint(): JPoint {
+		return new JPoint(
+			(-this._panzoom.centerX+this._size.x/2)/this._panzoom.scale,
+			(-this._panzoom.centerY+this._size.y/2)/this._panzoom.scale
+		);
+	}
+	get zoomValue(): number {
+		return Math.round(Math.log(this._panzoom.zoom)/Math.log(1.25));
 	}
 
 	setZoom(n: number) {
 		this._panzoom.zoom = n;
 	}
 
-	getZoomValue(): number {return this._panzoom.zoom}
-
 	setCenterpan(p: JPoint) {
-		this._centerPoint = new JPoint(p.x,p.y);
 		this._panzoom.centerX = -p.x*this._panzoom.scale + this._size.x/2;
 		this._panzoom.centerY = -p.y*this._panzoom.scale + this._size.y/2;
 	}
@@ -155,8 +161,41 @@ export default class DrawerMap {
 		return this._panzoom.pointsBuffCenterLimits;
 	}
 
-	/**borrar */
-	getPanzoom() {return this._panzoom}
+	/**navigation */
+	zoomIn() {
+		const center: JPoint = this.centerPoint;
+		this.setZoom(this.zoomValue+1);
+		this.setCenterpan(center);
+	}
+	zoomOut() {
+		const center: JPoint = this.centerPoint;
+		this.setZoom(this.zoomValue-1);
+		this.setCenterpan(center);
+	}
+	toTop() {
+		this.setCenterpan(new JPoint(
+			this.centerPoint.x,
+			this.centerPoint.y - this._panzoom.getYstep()
+		));
+	}
+	toBottom() {
+		this.setCenterpan(new JPoint(
+			this.centerPoint.x,
+			this.centerPoint.y + this._panzoom.getYstep()
+		));
+	}
+	toRight() {
+		this.setCenterpan(new JPoint(
+			this.centerPoint.x + this._panzoom.getXstep(),
+			this.centerPoint.y
+		));
+	}
+	toLeft() {
+		this.setCenterpan(new JPoint(
+			this.centerPoint.x - this._panzoom.getXstep(),
+			this.centerPoint.y
+		));
+	}
 
 	/** uso del canvas */
 	private get context(): CanvasRenderingContext2D {
@@ -182,8 +221,8 @@ export default class DrawerMap {
         this.context.closePath();
 	}
 
-	saveDraw(filePath: string) {
-		const out = fs.createWriteStream( filePath );
+	saveDraw(dirPath: string, fileName: string) {
+		const out = fs.createWriteStream( `${dirPath}/${fileName}` );
 		const stream = this._cnvs.createPNGStream();
 		stream.pipe(out);
 	}
