@@ -84,13 +84,7 @@ export default class JDiagram {
 	}
 	get vertices(): JPoint[] {return this._vertices}
 	get edges(): JEdge[] {return this._edges}
-	get cells(): JCell[] {
-		let out: JCell[] = [];
-		this._cells.forEach((c: JCell) => {
-			out.push(c);
-		})
-		return out;
-	}
+	get cells(): Map<number, JCell> { return this._cells }
 
 	forEachCell(func: (c: JCell) => void) {
 		this._cells.forEach((c: JCell) => {
@@ -110,7 +104,7 @@ export default class JDiagram {
 		return out;
 	}
 
-	private getCellFromPoint(p: JPoint): JCell {
+	getCellFromPoint(p: JPoint): JCell {
 		// se puede verificar si el punto se encuentra en la cell
 		let out: JCell | undefined;
 		let minDis: number = Infinity;

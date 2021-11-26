@@ -19,6 +19,8 @@ export default class JWorldMap {
 		// this.smoothHeight();
     }
 
+	get diagram(): JDiagram {return this._diagram}
+
 	private smoothHeight() {
 		this._diagram.forEachCell((c: JCell) => {
 			c.mark();
@@ -47,7 +49,7 @@ export default class JWorldMap {
 	private generateMoisture(): void {
 		console.log('generating moisture');
 	}
-
+/*
 	drawHeight(dm: DrawerMap) {
 		const polContainer = turf.polygon(
 			[dm.getPointsBuffDrawLimits().map((p: JPoint) => {return p.toTurfPosition()})]
@@ -83,5 +85,5 @@ export default class JWorldMap {
 			}
 		})
 	}
-
+*/
 }

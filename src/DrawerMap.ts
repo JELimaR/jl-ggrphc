@@ -1,11 +1,15 @@
 
 import { createCanvas } from 'canvas';
 import fs from 'fs';
+import * as turf from '@turf/turf';
+import chroma from 'chroma-js';
+const colorScale = chroma.scale('Spectral').domain([1,0]);
 
 import JPoint, {JVector} from './Geom/JPoint';
+import JWorldMap from './JWorldMap';
+import JCell from './Voronoi/JCell';
 
 export interface IDrawEntry {
-	points: JPoint[];
 	fillColor: string | 'none';
 	strokeColor: string | 'none';
 	drawType?: 'line' | 'polygon'
@@ -31,7 +35,9 @@ export class JPanzoom {
 		this._centerY = this._elementSize.y/2;
 	}
 
-	get zoom(): number {return this._zoom}
+	get zoom(): number {
+		return Math.round(Math.log(this._zoom)/Math.log(1.25))
+	}
 	set zoom(n: number) {
 		if (n >= 0 && n === Math.round(n) && n <= 20) {
 			this._zoom = Math.pow(1.25, n);
@@ -111,11 +117,17 @@ export class JPanzoom {
 	}
 
 	getXstep(): number {
-		return Math.abs(this.pointsBuffDrawLimits[2].x - this.pointsBuffCenterLimits[1].x)/5;
+		const i2 = this.pointsBuffDrawLimits[2].x;
+		const i1 = this.pointsBuffDrawLimits[1].x;
+		const dif: number =  i2-i1;
+		return dif/5;
 	}
 
 	getYstep(): number {
-		return Math.abs(this.pointsBuffDrawLimits[1].y - this.pointsBuffCenterLimits[0].y)/5;
+		const i1 = this.pointsBuffDrawLimits[1].y;
+		const i0 = this.pointsBuffDrawLimits[0].y;
+		const dif: number =  i1-i0;
+		return dif/5;
 	}
 
 }
@@ -134,6 +146,9 @@ export default class DrawerMap {
 		this._panzoom = new JPanzoom(this._size);
 	}
 
+	// borrar
+	getPanzoom() {return this._panzoom}
+
 	get centerPoint(): JPoint {
 		return new JPoint(
 			(-this._panzoom.centerX+this._size.x/2)/this._panzoom.scale,
@@ -141,7 +156,7 @@ export default class DrawerMap {
 		);
 	}
 	get zoomValue(): number {
-		return Math.round(Math.log(this._panzoom.zoom)/Math.log(1.25));
+		return this._panzoom.zoom;
 	}
 
 	setZoom(n: number) {
@@ -197,19 +212,33 @@ export default class DrawerMap {
 		));
 	}
 
+	drawCellMap(jwm: JWorldMap, func: (c: JCell) => IDrawEntry): void {
+		const polContainer = turf.polygon(
+			[this.getPointsBuffDrawLimits().map((p: JPoint) => {
+				return p.toTurfPosition()
+			})]
+		);
+		jwm.diagram.forEachCell((c: JCell) => {
+			if (!turf.booleanDisjoint(polContainer, c.toTurfPolygonSimple())) {
+				const points: JPoint[] = (this.zoomValue < 8) ? c.voronoiVertices : c.allVertices;
+				this.draw(points, func(c));
+			}
+		});
+	}
+
 	/** uso del canvas */
 	private get context(): CanvasRenderingContext2D {
 		return this._cnvs.getContext('2d');
-	}
+	}	
 
-	draw(ent: IDrawEntry): void {
-		let len: number = ent.points.length;
+	draw(points: JPoint[], ent: IDrawEntry): void {
+		let len: number = points.length;
 
         this.context.beginPath();
 
-		const initialPoint: JPoint = this._panzoom.convertPointToDrawer(ent.points[len-1]);
+		const initialPoint: JPoint = this._panzoom.convertPointToDrawer(points[len-1]);
         //this.context.moveTo(initialPoint.x, initialPoint.y);
-        for (let vert of ent.points) {
+        for (let vert of points) {
 			const vertex: JPoint = this._panzoom.convertPointToDrawer(vert);
             this.context.lineTo(vertex.x, vertex.y);
         }
