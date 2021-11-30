@@ -6,7 +6,7 @@ import chroma from 'chroma-js';
 const colorScale = chroma.scale('Spectral').domain([1,0]);
 
 import JPoint, {JVector} from './Geom/JPoint';
-import JWorldMap from './JWorldMap';
+import JWorldMap, { ICellContainer } from './JWorldMap';
 import JCell from './Voronoi/JCell';
 
 export interface IDrawEntry {
@@ -212,13 +212,13 @@ export default class DrawerMap {
 		));
 	}
 
-	drawCellMap(jwm: JWorldMap, func: (c: JCell) => IDrawEntry): void {
+	drawCellMap(cc: ICellContainer, func: (c: JCell) => IDrawEntry): void {
 		const polContainer = turf.polygon(
 			[this.getPointsBuffDrawLimits().map((p: JPoint) => {
 				return p.toTurfPosition()
 			})]
 		);
-		jwm.diagram.forEachCell((c: JCell) => {
+		cc.forEachCell((c: JCell) => {
 			if (!turf.booleanDisjoint(polContainer, c.toTurfPolygonSimple())) {
 				const points: JPoint[] = (this.zoomValue < 8) ? c.voronoiVertices : c.allVertices;
 				this.draw(points, func(c));
@@ -256,4 +256,7 @@ export default class DrawerMap {
 		stream.pipe(out);
 	}
 
+	saveMap(dirPath: string, fileName: string) {
+		fs.writeFileSync(`${dirPath}/${fileName}`, this._cnvs.toBuffer());
+	}
 }

@@ -4,11 +4,13 @@ import JCell from "./Voronoi/JCell";
 import JDiagram from "./Voronoi/JDiagram";
 import JPoint from "./Geom/JPoint";
 import chroma from 'chroma-js';
-import * as turf from '@turf/turf';
-const colorScale = chroma.scale('Spectral').domain([1,0]);
+
+export interface ICellContainer {
+	forEachCell: (func: (c: JCell) => void) => void
+}
 
 
-export default class JWorldMap {
+export default class JWorldMap implements ICellContainer {
 
     private _diagram: JDiagram;
 
@@ -20,6 +22,10 @@ export default class JWorldMap {
     }
 
 	get diagram(): JDiagram {return this._diagram}
+
+	forEachCell(func: (c: JCell) => void) {
+		this._diagram.forEachCell(func);
+	}
 
 	private smoothHeight() {
 		this._diagram.forEachCell((c: JCell) => {
