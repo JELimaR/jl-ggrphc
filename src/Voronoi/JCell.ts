@@ -206,11 +206,13 @@ class JCellInformation {
 	get mark(): boolean {return this._mark}
 	set mark(b: boolean) {this._mark = b}
 
-	getInterface(): IJCellInformation { return {
-		id: this._cell.id,
+	getInterface(): IJCellInformation { 
+		return {
+			id: this._cell.id,
 
-		height: this._height,
-		prevHeight: this._prevHeight,
-		heightType: this._heightType,
-	} }
+			height: this._height,
+			prevHeight: this._prevHeight,
+			heightType: this._heightType,
+		}
+	}
 }

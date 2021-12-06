@@ -2,10 +2,12 @@ import { Site } from 'voronoijs';
 import * as turf from '@turf/turf';
 
 import RandomNumberGenerator from '../Geom/RandomNumberGenerator';
+import DataInformationFilesManager from '../DataInformationLoadAndSave';
 import {BuffRegs} from '../zones/BuffRegs';
 import { pointInArrReg } from '../zones/functions';
 import fs from 'fs';
 
+const dataInfoManager = DataInformationFilesManager.instance;
 
 const XDIF: number = 360;
 const YDIF: number = 180;
@@ -24,7 +26,7 @@ export default class GenerateMapVoronoiSites {
 	}
 
 	static randomOnBuffRegsSites(total: number): Site[] {
-		const loaded: Site[] = loadSites(total);
+		const loaded: Site[] = dataInfoManager.loadSites(total);
 		if (loaded.length > 0) {
 			return loaded;
 		}
@@ -51,7 +53,7 @@ export default class GenerateMapVoronoiSites {
            
         }
 
-		saveSites(out);
+		dataInfoManager.saveSites(out, total);
         return out;
 	}
 

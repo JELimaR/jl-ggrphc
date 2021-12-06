@@ -138,12 +138,15 @@ export default class DrawerMap {
 	private _cnvs: any;
 
 	private _panzoom: JPanzoom;
+	private _dirPath: string;
 
-	constructor(SIZE: JVector) {
+	constructor(SIZE: JVector, dirPath: string) {
 		this._size = SIZE;
 		this._cnvs = createCanvas(SIZE.x, SIZE.y);
 
 		this._panzoom = new JPanzoom(this._size);
+		this._dirPath = dirPath;
+		fs.mkdirSync(this._dirPath, {recursive: true});
 	}
 
 	// borrar
@@ -250,13 +253,13 @@ export default class DrawerMap {
         this.context.closePath();
 	}
 
-	saveDraw(dirPath: string, fileName: string) {
-		const out = fs.createWriteStream( `${dirPath}/${fileName}` );
+	saveDrawStream( fileName: string) {
+		const out = fs.createWriteStream( `${this._dirPath}/${fileName}` );
 		const stream = this._cnvs.createPNGStream();
 		stream.pipe(out);
 	}
 
-	saveMap(dirPath: string, fileName: string) {
-		fs.writeFileSync(`${dirPath}/${fileName}`, this._cnvs.toBuffer());
+	saveDrawFile( fileName: string) {
+		fs.writeFileSync(`${this._dirPath}/${fileName}`, this._cnvs.toBuffer());
 	}
 }

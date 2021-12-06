@@ -5,6 +5,8 @@ import JEdge from "./JEdge";
 import JSite from './JSite';
 import fs from 'fs';
 import { IJCellInformation } from './JCell';
+import DataInformationFilesManager from '../DataInformationLoadAndSave';
+const dataInfoManager = DataInformationFilesManager.instance;
 
 
 export default class JDiagram {
@@ -52,7 +54,7 @@ export default class JDiagram {
 		})
 		
 		// setear cells
-		const loadedInfo: IJCellInformation[] = loadCellsInfo(d.cells.length);
+		const loadedInfo: IJCellInformation[] = dataInfoManager.loadCellsInfo(d.cells.length);
         d.cells.forEach( (c: Cell) => {
 			const js: JSite = sites.get(c.site.id) as JSite;
 			let arrEdges: JEdge[] = [];
@@ -70,7 +72,7 @@ export default class JDiagram {
 		});
 		
 		if (loadedInfo.length === 0)
-			saveCellsInfo( this._cells);
+			dataInfoManager.saveCellsInfo( this._cells, d.cells.length);
 		
 		console.timeEnd('set JDiagram values');
     }
@@ -102,6 +104,10 @@ export default class JDiagram {
 				throw new Error('cell tiene neghbor que no existe');
 		}
 		return out;
+	}
+
+	getCellById(id: number): JCell | undefined {
+		return this._cells.get(id);
 	}
 
 	getCellFromPoint(p: JPoint): JCell {
