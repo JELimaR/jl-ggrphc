@@ -29,32 +29,33 @@ export default class GenerateMapVoronoiSites {
 		const loaded: Site[] = dataInfoManager.loadSites(total);
 		if (loaded.length > 0) {
 			return loaded;
-		}
-		let out: Site[] = [];
-		const nr: number = Math.round(total*0.001);
-		const nz: number = Math.round(total*0.999);
-		console.log('entnum', {nr, nz});
-		const randFunc = RandomNumberGenerator.makeRandomFloat(nr*nz);
+		} else {
+			let out: Site[] = [];
+			const nr: number = Math.round(total*0.001);
+			const nz: number = Math.round(total*0.999);
+			console.log('entnum', {nr, nz});
+			const randFunc = RandomNumberGenerator.makeRandomFloat(nr*nz);
 
-		for (let i=0; i<nr; i++ ) {
-            const pos = this.randomSite(randFunc)
-            out.push( {id: nz+i, x: pos[0], y: pos[1]});
-        }
-
-        for (let i=0; i<nz; i++ ) {
-			let ok: boolean = false;
-			let pos: turf.Position;
-			while (!ok) {
-				pos = this.randomSite(randFunc);
-				ok = this.isInBuffZone(pos);
-				if (ok)
-				out.push({id: i, x: pos[0], y: pos[1]});
+			for (let i=0; i<nr; i++ ) {
+				const pos = this.randomSite(randFunc)
+				out.push( {id: nz+i, x: pos[0], y: pos[1]});
 			}
-           
-        }
 
-		dataInfoManager.saveSites(out, total);
-        return out;
+			for (let i=0; i<nz; i++ ) {
+				let ok: boolean = false;
+				let pos: turf.Position;
+				while (!ok) {
+					pos = this.randomSite(randFunc);
+					ok = this.isInBuffZone(pos);
+					if (ok)
+					out.push({id: i, x: pos[0], y: pos[1]});
+				}
+			
+			}
+
+			dataInfoManager.saveSites(out, total);
+			return out;
+		}
 	}
 
 	static isInBuffZone(pos: turf.Position): boolean {
@@ -66,20 +67,4 @@ export default class GenerateMapVoronoiSites {
 		let yy = Math.round( randFloat()*YDIF*1000000 )/1000000 - 90;
 		return [xx, yy];
 	}
-}
-
-const loadSites = (c: number): Site[] => {
-	let out: Site[] = [];
-	try {
-		let pathName: string = __dirname + `/../../test/GeneratedSites${c}.json`;
-		out = JSON.parse(fs.readFileSync(pathName).toString());
-	} catch (e) {
-		
-	}
-	return out;
-}
-
-const saveSites = (sites: Site[]): void => {
-	let pathName: string = __dirname + `/../../test/GeneratedSites${sites.length}.json`;
-	fs.writeFileSync(pathName, JSON.stringify(sites));
 }

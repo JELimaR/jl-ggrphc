@@ -2,7 +2,8 @@ import { Site } from 'voronoijs';
 import fs  from 'fs';
 
 import JCell, { IJCellInformation } from './Voronoi/JCell';
-import JRegionMap, { IRegionInfo } from './JRegionMap';
+import JRegionMap, { IJRegionInfo } from './JRegionMap';
+import { IJContinentInfo, JContinentMap, IJIslandInfo, JIslandMap } from './JWorldMap';
 
 export default class DataInformationFilesManager {
 	static _instance: DataInformationFilesManager;
@@ -65,8 +66,8 @@ export default class DataInformationFilesManager {
 	}
 
 	// islands o masas
-	loadIslandsInfo(tam: number): IRegionInfo[] {
-		let out: IRegionInfo[] = [];
+	loadIslandsInfo(tam: number): IJIslandInfo[] {
+		let out: IJIslandInfo[] = [];
 		try {
 			let pathName: string = `${this._dirPath}/${tam}/IslandsInfo.json`;
 			out = JSON.parse(fs.readFileSync(pathName).toString());
@@ -76,15 +77,34 @@ export default class DataInformationFilesManager {
 		return out;
 	}
 
-	saveIslandsInfo(islands: JRegionMap[], tam: number): void {
+	saveIslandsInfo(islands: JIslandMap[], tam: number): void {
 		fs.mkdirSync(`${this._dirPath}/${tam}`, {recursive: true});
 		let pathName: string = `${this._dirPath}/${tam}/IslandsInfo.json`;
-		let data: IRegionInfo[] = [];
-		islands.forEach( (i: JRegionMap) => {
+		let data: IJIslandInfo[] = [];
+		islands.forEach( (i: JIslandMap) => {
 			data.push(i.getInterface());
 		})
 		fs.writeFileSync(pathName, JSON.stringify(data));
 	}
 	// continents
+	loadContinentsInfo(tam: number): IJContinentInfo[] {
+		let out: IJContinentInfo[] = [];
+		try {
+			let pathName: string = `${this._dirPath}/${tam}/ContinentsInfo.json`;
+			out = JSON.parse(fs.readFileSync(pathName).toString());
+		} catch (e) {
+			
+		}
+		return out;
+	}
 
+	saveContinentsInfo(continents: JContinentMap[], tam: number): void {
+		fs.mkdirSync(`${this._dirPath}/${tam}`, {recursive: true});
+		let pathName: string = `${this._dirPath}/${tam}/ContinentsInfo.json`;
+		let data: IJContinentInfo[] = [];
+		continents.forEach( (i: JContinentMap) => {
+			data.push(i.getInterface());
+		})
+		fs.writeFileSync(pathName, JSON.stringify(data));
+	}
 }

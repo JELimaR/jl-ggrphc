@@ -11,9 +11,9 @@ export default class JWorldMapGenerator {
 	static generate(TOTAL: number): JWorldMap {
 		console.log('init voronoi');
 		console.time('voronoi');
-		console.time('Generate Sites')
+		console.time('Generate Sites');
 		let sites: Site[] = GenerateMapVoronoiSites.randomOnBuffRegsSites(TOTAL*1000);
-		console.timeEnd('Generate Sites')
+		console.timeEnd('Generate Sites');
 		let diagram: JDiagram = VoronoiDiagramMapCreator.createDiagram(sites, 1);
 		console.timeEnd('voronoi');
 
