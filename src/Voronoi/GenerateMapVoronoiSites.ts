@@ -4,8 +4,7 @@ import * as turf from '@turf/turf';
 import RandomNumberGenerator from '../Geom/RandomNumberGenerator';
 import DataInformationFilesManager from '../DataInformationLoadAndSave';
 import {BuffRegs} from '../zones/BuffRegs';
-import { pointInArrReg } from '../zones/functions';
-import fs from 'fs';
+import { pointInArrReg } from '../Geom/utilsTurfFunctions';
 
 const dataInfoManager = DataInformationFilesManager.instance;
 
@@ -53,7 +52,7 @@ export default class GenerateMapVoronoiSites {
 			
 			}
 
-			dataInfoManager.saveSites(out, total);
+			// dataInfoManager.saveSites(out, total);
 			return out;
 		}
 	}

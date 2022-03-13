@@ -1,12 +1,19 @@
-import { Cell, Diagram, Edge } from 'voronoijs';
+import { Edge } from 'voronoijs';
 import JPoint, {JVector} from '../Geom/JPoint';
 import JSite from './JSite';
 
 import RandomNumberGenerator from '../Geom/RandomNumberGenerator';
 import * as turf from '@turf/turf'
 
+// export interface IJEdgeInfo {
+// 	lSite: {id: number};
+// 	rSite: {id: number } | undefined;
+// 	va: string;
+// 	vb: string;
+// }
+
 interface IJEdgeConstructor {
-	e: Edge;
+	//e: Edge;
 	ls: JSite;
 	rs?: JSite;
 	va: JPoint;
@@ -15,18 +22,28 @@ interface IJEdgeConstructor {
 
 export default class JEdge {
 
-	private _edge: Edge;
 	private _lSite: JSite;
 	private _rSite: JSite | undefined;
 	private _vertexA: JPoint;
-	private _vertexB: JPoint; 
+	private _vertexB: JPoint;
+	private _points: JPoint[] = [];
+	static _diagramSize: number;
 
-	constructor({e, ls, rs, va, vb}: IJEdgeConstructor) {
-		this._edge = e;
+	constructor({/*e,*/ ls, rs, va, vb}: IJEdgeConstructor) {
+		//this._edge = e;
 		this._lSite = ls;
 		this._rSite = rs;
 		this._vertexA = va;
 		this._vertexB = vb;
+	}
+
+	static calculateId(lid: number, rid: number): number {
+		let key: number = (lid + 1) * this._diagramSize + (rid + 1);
+		return key
+	}
+
+	static set diagramSize(ds: number) {
+		this._diagramSize = ds + 1;
 	}
 
 	// get diagramId(): string { return this._id}
@@ -35,6 +52,12 @@ export default class JEdge {
 	get rSite(): JSite | undefined {return this._rSite}
 	get vertexA(): JPoint { return this._vertexA}
 	get vertexB(): JPoint { return this._vertexB}
+
+	get id(): number {
+		let out = (this._lSite.id + 1) * JEdge._diagramSize;
+		out += (this._rSite) ? this._rSite.id + 1 : 0;
+		return out;
+	}
 
 	get diamond(): turf.Feature<turf.Polygon> {
 		if (this._rSite) {
@@ -51,22 +74,36 @@ export default class JEdge {
 	}
 
 	get points(): JPoint[] {
-		let out: JPoint[] = [];
-		if (this._rSite) {
-			const randf: () => number = RandomNumberGenerator.makeRandomFloat(this._rSite.id);
-			const pointsList: turf.Position[] = noiseTraceLine(
-				[this._vertexA.toTurfPosition(), this._vertexB.toTurfPosition()],
-				this.diamond,
-				randf
-			);
-			pointsList.forEach((element: turf.Position) => {
-				out.push( new JPoint( element[0], element[1] ) )
-			})
+		if (this._points.length === 0) {
+			let out: JPoint[] = [];
+			if (this._rSite) {
+				const randf: () => number = RandomNumberGenerator.makeRandomFloat(this._rSite.id);
+				const pointsList: turf.Position[] = noiseTraceLine(
+					[this._vertexA.toTurfPosition(), this._vertexB.toTurfPosition()],
+					this.diamond,
+					randf
+				);
+				pointsList.forEach((element: turf.Position) => {
+					out.push( new JPoint( element[0], element[1] ) )
+				})
+			} else {
+				out = [this._vertexA, this._vertexB];
+			}
+			return out;
 		} else {
-			out = [this._vertexA, this._vertexB];
+			return this._points;
 		}
-		return out;
 	}
+
+	// getInterface(): IJEdgeInfo {
+	// 	const rs = (this._rSite) ? {id: this._rSite.id} : undefined
+	// 	return {
+	// 		lSite: {id: this._lSite.id},
+	// 		rSite: rs,
+	// 		va: `${this._vertexA.x}_${this._vertexA.y}`,
+	// 		vb: `${this._vertexB.x}_${this._vertexB.y}`,
+	// 	}
+	// }
 	
 }
 

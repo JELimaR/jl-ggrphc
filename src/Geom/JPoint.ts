@@ -6,8 +6,8 @@ export default class JPoint {
 	private _y: number;
 
 	constructor( x: number, y: number ) {
-		this._x = Math.round(x * 1000000)/1000000;
-		this._y = Math.round(y * 1000000)/1000000;
+		this._x = x;
+		this._y = y;
 	}
 
 	get x() { return this._x }
@@ -28,8 +28,8 @@ export default class JPoint {
 
 	static equal(a: JPoint, b: JPoint): boolean {
 		return (
-			a._x === b._x &&
-			a._y === b._y
+			Math.abs(a._x - b._x) < 0.0001 &&
+			Math.abs(a._y - b._y) < 0.0001
 		)
 	}
 

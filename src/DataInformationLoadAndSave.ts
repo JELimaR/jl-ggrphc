@@ -1,9 +1,11 @@
 import { Site } from 'voronoijs';
-import fs  from 'fs';
+import fs from 'fs';
 
-import JCell, { IJCellInformation } from './Voronoi/JCell';
-import JRegionMap, { IJRegionInfo } from './JRegionMap';
-import { IJContinentInfo, JContinentMap, IJIslandInfo, JIslandMap } from './JWorldMap';
+import JCell from './Voronoi/JCell';
+import { IJContinentInfo, IJCountryInfo, IJIslandInfo, IJStateInfo, JContinentMap, JCountryMap, JIslandMap, JStateMap } from './RegionMap/JRegionMap';
+// import { IJDiagramInfo } from './Voronoi/JDiagram';
+// import { IJEdgeInfo } from './Voronoi/JEdge';
+import { IJCellInformation } from './Voronoi/JCellInformation';
 
 export default class DataInformationFilesManager {
 	static _instance: DataInformationFilesManager;
@@ -24,6 +26,76 @@ export default class DataInformationFilesManager {
 		fs.mkdirSync(this.instance._dirPath, {recursive: true});
 	}
 
+	// voronoi diagram
+	/*
+	loadDiagram(tam: number): IJDiagramInfo | undefined {
+		let out = {
+			vertices: this.loadVertices(tam),
+			cells: this.loadCells(tam),
+			edges: this.loadEdges(tam),
+		}
+		if (out.cells.length == 0 || out.edges.length == 0 || out.vertices.length == 0) {
+			return undefined
+		}
+		return out;
+	}
+
+	private loadVertices(tam: number): {x: number, y:number}[]  {
+		let out: {x: number, y: number}[] = [];
+		try {
+			let pathName: string = `${this._dirPath}/${tam}/VoronoiDiagram/vertices.json`;
+			out = JSON.parse(fs.readFileSync(pathName).toString());
+		} catch (e) {
+			
+		}
+		return out;	
+	}
+
+	private loadCells(tam: number): IJCellInfo[]  {
+		let out: IJCellInfo[] = [];
+		try {
+			let pathName: string = `${this._dirPath}/${tam}/VoronoiDiagram/cells.json`;
+			out = JSON.parse(fs.readFileSync(pathName).toString());
+		} catch (e) {
+			
+		}
+		return out;	
+	}
+
+	private loadEdges(tam: number): IJEdgeInfo[]  {
+		let out: IJEdgeInfo[] = [];
+		try {
+			let pathName: string = `${this._dirPath}/${tam}/VoronoiDiagram/edges.json`;
+			out = JSON.parse(fs.readFileSync(pathName).toString());
+		} catch (e) {
+			
+		}
+		return out;	
+	}
+
+	saveDiagram(diagram: IJDiagramInfo, tam: number): void {
+		let dirpathName: string = `${this._dirPath}/${tam}/VoronoiDiagram`;
+		fs.mkdirSync(dirpathName, {recursive: true});
+		this.saveVertices(diagram.vertices, dirpathName);
+		this.saveCells(diagram.cells, dirpathName);
+		this.saveEdges(diagram.edges, dirpathName);
+	}
+
+	private saveVertices(verts: {x: number, y:number}[], dirpathName: string): void {
+		let pathName: string = `${dirpathName}/vertices.json`;
+		fs.writeFileSync(pathName, JSON.stringify(verts));
+	}
+
+	private saveCells(cells: IJCellInfo[], dirpathName: string): void {
+		let pathName: string = `${dirpathName}/cells.json`;
+		fs.writeFileSync(pathName, JSON.stringify(cells));
+	}
+
+	private saveEdges(edges: IJEdgeInfo[], dirpathName: string): void {
+		let pathName: string = `${dirpathName}/edges.json`;
+		fs.writeFileSync(pathName, JSON.stringify(edges));
+	}
+	*/
 	// sites
 	loadSites(tam: number): Site[] {
 		if (this._dirPath === '') throw new Error('non configurated path');
@@ -107,4 +179,52 @@ export default class DataInformationFilesManager {
 		})
 		fs.writeFileSync(pathName, JSON.stringify(data));
 	}
+
+	// states
+	loadStatesInfo(tam: number, contid: number): IJStateInfo[]  {
+		let out: IJStateInfo[] = [];
+		try {
+			let pathName: string = `${this._dirPath}/${tam}/divisions/cont${contid}/StatesInfo.json`;
+			out = JSON.parse(fs.readFileSync(pathName).toString());
+		} catch (e) {
+			
+		}
+		return out;
+	}
+
+	saveStatesInfo(states: JStateMap[] | Map<string, JStateMap>, tam: number, contid: number) {
+		fs.mkdirSync(`${this._dirPath}/${tam}/divisions/cont${contid}`, {recursive: true});
+		let pathName: string = `${this._dirPath}/${tam}/divisions/cont${contid}/StatesInfo.json`;
+		let data: IJStateInfo[] = [];
+		states.forEach((s: JStateMap) => {
+			data.push(s.getInterface());
+		})
+		fs.writeFileSync(pathName, JSON.stringify(data));
+	}
+
+	// country
+	loadCountriesInfo(tam: number, contid: number): IJCountryInfo[]  {
+		let out: IJCountryInfo[] = [];
+		try {
+			let pathName: string = `${this._dirPath}/${tam}/divisions/cont${contid}/CountriesInfo.json`;
+			out = JSON.parse(fs.readFileSync(pathName).toString());
+		} catch (e) {
+			
+		}
+		return out;
+	}
+
+	saveCountriesInfo(countries: JCountryMap[], tam: number, contid: number) {
+		fs.mkdirSync(`${this._dirPath}/${tam}/divisions/cont${contid}`, {recursive: true});
+		let pathName: string = `${this._dirPath}/${tam}/divisions/cont${contid}/CountriesInfo.json`;
+		let data: IJCountryInfo[] = [];
+		countries.forEach((c: JCountryMap) => {
+			data.push(c.getInterface());
+		})
+		fs.writeFileSync(pathName, JSON.stringify(data));
+	}
 }
+
+export type TypeDivisionRegion = 
+	| 'country'
+	| 'state'

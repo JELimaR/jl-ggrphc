@@ -1,62 +1,103 @@
-import * as turf from '@turf/turf';
+import RandomNumberGenerator from "../Geom/RandomNumberGenerator";
+import { BuffRegs } from "../zones/BuffRegs";
+import { pointInArrReg } from "../Geom/utilsTurfFunctions";
+import { HHRegs } from "../zones/HHRegs";
+import { HLRegs } from "../zones/HLRegs";
+import { LHRegs } from "../zones/LHRegs";
+import { LLRegs } from "../zones/LLRegs";
+import { MHRegs } from "../zones/MHRegs";
+import { MLRegs } from "../zones/MLRegs";
+import JCell from "./JCell";
 
-import JCell from './JCell';
-import zones from '../zones/zones';
-import {RH, RM} from './reliefZones'
+export type TypeCellheight =
+	| 'deepocean'
+	| 'ocean'
+	| 'land'
 
-export type TypeCellHeigth =
-	| 'deepwater'
-	| 'middlewater'
-	| ''
+export interface IJCellInformation {
+	id: number;
+
+	height: number;
+	prevHeight: number;
+	heightType: TypeCellheight;
+}
 
 export default class JCellInformation {
-	private _typeCellHeigt: TypeCellHeigth = '';
-	private _heigth: number = 0;
-	
-	constructor(jcell: JCell) {
-		const inLandZone: boolean = 
-			turf.booleanContains(zones[0],jcell.toTurfPolygonSimple()) ||
-			turf.booleanContains(zones[1],jcell.toTurfPolygonSimple()) ||
-			turf.booleanContains(zones[2],jcell.toTurfPolygonSimple()) ||
-			turf.booleanContains(zones[3],jcell.toTurfPolygonSimple());
-		
-		if (inLandZone) {
-			const boolRH: boolean = 
-				turf.booleanContains(RH[0],jcell.toTurfPolygonSimple()) ||
-				turf.booleanContains(RH[1],jcell.toTurfPolygonSimple()) ||
-				turf.booleanContains(RH[2],jcell.toTurfPolygonSimple()) ||
-				turf.booleanContains(RH[3],jcell.toTurfPolygonSimple()) ||
-				turf.booleanContains(RH[4],jcell.toTurfPolygonSimple()) ||
-				turf.booleanContains(RH[5],jcell.toTurfPolygonSimple()) ||
-				turf.booleanContains(RH[6],jcell.toTurfPolygonSimple());
-			if (boolRH) {
-				this._heigth = 0.4 + 0.6*Math.random();
-			} else {
-				const boolMH: boolean = 
-					turf.booleanContains(RM[0],jcell.toTurfPolygonSimple()) ||
-					turf.booleanContains(RM[1],jcell.toTurfPolygonSimple()) ||
-					turf.booleanContains(RM[2],jcell.toTurfPolygonSimple()) ||
-					turf.booleanContains(RM[3],jcell.toTurfPolygonSimple()) ||
-					turf.booleanContains(RM[4],jcell.toTurfPolygonSimple()) ||
-					turf.booleanContains(RM[5],jcell.toTurfPolygonSimple()) ||
-					turf.booleanContains(RM[6],jcell.toTurfPolygonSimple()) ||
-					turf.booleanContains(RM[7],jcell.toTurfPolygonSimple());
-				if (boolMH) {
-					this._heigth = 0.2 + 0.4*Math.random();
-				} else {
-					this._heigth = 0.1 + 0.2*Math.random();
-				}
-			}
+	private _cell: JCell;
+	private _mark: boolean = false;
+
+	private _height: number;
+	private _prevHeight: number = 0;
+	private _heightType: TypeCellheight;
+
+	constructor(c: JCell, info: IJCellInformation | undefined) {
+		this._cell = c;
+		// const turfPol = this._cell.toTurfPolygonSimple();
+		if (info) {
+			this._height = info.height;
+			this._prevHeight = info.prevHeight;
+			this._heightType = info.heightType;
 		} else {
-			this._heigth = 0.05;
-			this._typeCellHeigt = 'deepwater';
+			const out = this.setReliefZone();
+			this._height = Math.round(out.h*1000000)/1000000;
+			this._heightType = out.th;
 		}
 	}
 
-	get typeCellHeigth(): TypeCellHeigth {return this._typeCellHeigt}
-	get heigth(): number {return this._heigth}
-	set heigth(h: number) {
-		this._heigth = h;
+	setReliefZone(): { h: number, th: TypeCellheight} {
+		let out: {h: number, th: TypeCellheight} = { h: 0, th: 'land'};
+		const rfn: ()=>number = RandomNumberGenerator.makeRandomFloat(this._cell.id);
+		if (!pointInArrReg(this._cell.center.toTurfPosition(), BuffRegs)) {
+			out.h = 0.05;
+			out.th = 'deepocean'
+		} else if (pointInArrReg(this._cell.center.toTurfPosition(), HHRegs)) {
+			out.h = 0.85+0.15*rfn();
+		} else if (pointInArrReg(this._cell.center.toTurfPosition(), HLRegs)) {
+			out.h = 0.60+0.25*rfn();
+		} else if (pointInArrReg(this._cell.center.toTurfPosition(), MHRegs)) {
+			out.h = 0.45+0.20*rfn();
+		} else if (pointInArrReg(this._cell.center.toTurfPosition(), MLRegs)) {
+			out.h = 0.35+0.15*rfn();
+		} else if (pointInArrReg(this._cell.center.toTurfPosition(), LHRegs)) {
+			out.h = 0.30+0.10*rfn();
+		} else if (pointInArrReg(this._cell.center.toTurfPosition(), LLRegs)) {
+			out.h = 0.20+0.15*rfn();
+		} else {
+			out.h = 0.15;
+			out.th = 'ocean';
+		}
+		return out;
 	}
 
+	get height(): number {return this._height}
+	get prevHeight(): number {return this._prevHeight}
+	get heightType(): TypeCellheight {return this._heightType}
+	set height(h: number) {
+		if (this._heightType === 'land' && h < 0.2) {
+			this._prevHeight = this._height;
+			this._height = 0.2;
+			return;
+		}
+		if (this._heightType === 'ocean' && h > 0.15) {
+			this._prevHeight = this._height;
+			this._height = 0.15;
+			return
+		}
+		if (this._heightType === 'deepocean') return;
+		this._prevHeight = this._height;
+		this._height = h;
+	}
+	// get inLandZone(): boolean {return this._heightType === ''}
+	get mark(): boolean {return this._mark}
+	set mark(b: boolean) {this._mark = b}
+
+	getInterface(): IJCellInformation { 
+		return {
+			id: this._cell.id,
+
+			height: this._height,
+			prevHeight: this._prevHeight,
+			heightType: this._heightType,
+		}
+	}
 }

@@ -1,38 +1,46 @@
 import { Cell, Diagram, Halfedge, Edge, Vertex } from 'voronoijs';
-import JPoint, {JVector} from '../Geom/JPoint';
+import JPoint, { JVector } from '../Geom/JPoint';
 import JCell from "./JCell";
 import JEdge from "./JEdge";
 import JSite from './JSite';
-import fs from 'fs';
-import { IJCellInformation } from './JCell';
 import DataInformationFilesManager from '../DataInformationLoadAndSave';
+import { IJCellInformation } from './JCellInformation';
 const dataInfoManager = DataInformationFilesManager.instance;
 
 
 export default class JDiagram {
 	// private _diagram: Diagram;
-    private _cells: Map<number, JCell>  = new Map<number, JCell>();
+	private _cells: Map<number, JCell> = new Map<number, JCell>();
 	private _vertices: JPoint[] = [];
 	private _edges: JEdge[] = []; //cambiar
 
-    constructor( d: Diagram ) {
-		console.log('Setting JDiagram values')
+	constructor(d: Diagram) {
+		console.log('Setting JDiagram values');
 		console.time('set JDiagram values');
+
+		this.setDiagramValuesContructed(d);
+
+		console.timeEnd('set JDiagram values');
+	}
+
+	private setDiagramValuesContructed(d: Diagram): void {
+		// setear sites
 		let sites: Map<number, JSite> = new Map<number, JSite>();
-        d.cells.forEach( (c: Cell) => {
+		d.cells.forEach((c: Cell) => {
 			const js: JSite = new JSite(c.site);
-			sites.set(js.id,js);
+			sites.set(js.id, js);
 		});
 		// setear vertices
 		let verticesMap = new Map<Vertex, JPoint>();
 		d.vertices.forEach((v: Vertex) => {
 			const p = new JPoint(v.x, v.y);
 			this._vertices.push(p);
-			verticesMap.set(v,p);
+			verticesMap.set(v, p);
 		})
 		// setear edges
+		JEdge.diagramSize = d.cells.length;
 		let edgesMap = new Map<Edge, JEdge>();
-		d.edges.forEach( (e: Edge) => {
+		d.edges.forEach((e: Edge) => {
 			// obtener vertices: va y vb
 			let va: JPoint = verticesMap.get(e.va) as JPoint;
 			let vb: JPoint = verticesMap.get(e.vb) as JPoint;
@@ -41,41 +49,66 @@ export default class JDiagram {
 			const ls: JSite = sites.get(e.lSite.id) as JSite;
 			const rs: JSite | undefined = e.rSite ? sites.get(e.rSite.id) : undefined;
 
-			let Je = new JEdge({
-				e: e,
+			let je = new JEdge({
 				va: va,
 				vb: vb,
 				ls: ls,
 				rs: rs
 			});
 
-			this._edges.push(Je);
-			edgesMap.set(e, Je)
+			this._edges.push(je);
+			edgesMap.set(e, je);
 		})
-		
+
 		// setear cells
-		const loadedInfo: IJCellInformation[] = dataInfoManager.loadCellsInfo(d.cells.length);
-        d.cells.forEach( (c: Cell) => {
+		// const loadedInfo: IJCellInformation[] = dataInfoManager.loadCellsInfo(d.cells.length);
+		d.cells.forEach((c: Cell) => {
 			const js: JSite = sites.get(c.site.id) as JSite;
 			let arrEdges: JEdge[] = [];
 
-			c.halfedges.forEach( (he: Halfedge) => {
-				const aux = he.edge;
-				const je: JEdge = edgesMap.get(aux) as JEdge;
+			c.halfedges.forEach((he: Halfedge) => {
+				const je: JEdge = edgesMap.get(he.edge) as JEdge;
 				arrEdges.push(je)
 			})
 
-			const info: IJCellInformation | undefined = loadedInfo[c.site.id];
-				
-			const cell = new JCell(c, js, arrEdges, info);
+			// const info: IJCellInformation | undefined = loadedInfo[c.site.id];
+
+			const cell = new JCell(/*c,*/ js, arrEdges/*info*/);
 			this._cells.set(js.id, cell);
 		});
-		
-		if (loadedInfo.length === 0)
-			dataInfoManager.saveCellsInfo( this._cells, d.cells.length);
-		
-		console.timeEnd('set JDiagram values');
-    }
+
+		// if (loadedInfo.length === 0) {
+			// this.smoothHeight();
+			// dataInfoManager.saveCellsInfo(this._cells, this._cells.size);
+		// }
+
+		// dataInfoManager.saveDiagram(this.getInterface(), this._cells.size);
+	}
+
+	// private smoothHeight() {
+	// 	this.forEachCell((c: JCell) => {
+	// 		c.mark();
+	// 		let ht: number = c.height;
+	// 		let cant: number = 1;
+	// 		let ns: JCell[] = this.getNeighbors(c)
+	// 		ns.forEach((n: JCell) => {
+	// 			cant++;
+	// 			if (n.isMarked()) {
+	// 				ht += n.prevHeight;
+	// 			} else {
+	// 				ht += n.height;
+	// 			}
+	// 		})
+	// 		ht = ht / cant;
+	// 		if (c.isLand)
+	// 			c.height = ht < 0.2 ? 0.2 : ht;
+	// 		else
+	// 			c.height = ht > 0.15 ? 0.15 : ht;
+	// 	})
+	// 	this.forEachCell((c: JCell) => {
+	// 		c.dismark();
+	// 	})
+	// }
 
 	get sites(): JSite[] {
 		let out: JSite[] = [];
@@ -84,8 +117,8 @@ export default class JDiagram {
 		})
 		return out;
 	}
-	get vertices(): JPoint[] {return this._vertices}
-	get edges(): JEdge[] {return this._edges}
+	get vertices(): JPoint[] { return this._vertices }
+	get edges(): JEdge[] { return this._edges }
 	get cells(): Map<number, JCell> { return this._cells }
 
 	forEachCell(func: (c: JCell) => void) {
@@ -96,11 +129,11 @@ export default class JDiagram {
 
 	getNeighbors(cell: JCell): JCell[] {
 		let out: JCell[] = [];
-		for ( let id of cell.neighborsId) {
+		for (let id of cell.neighborsId) {
 			const n: JCell | undefined = this._cells.get(id);
-			if (n) 
+			if (n)
 				out.push(n);
-			else 
+			else
 				throw new Error('cell tiene neghbor que no existe');
 		}
 		return out;
@@ -115,9 +148,9 @@ export default class JDiagram {
 		let out: JCell | undefined;
 		let minDis: number = Infinity;
 
-		this._cells.forEach( (vp: JCell) => {
+		this._cells.forEach((vp: JCell) => {
 			let c: JPoint = vp.center;
-			let dis: number = JPoint.distance(c,p);
+			let dis: number = JPoint.distance(c, p);
 			if (dis < minDis) {
 				out = vp;
 				minDis = dis;
@@ -129,24 +162,6 @@ export default class JDiagram {
 			throw new Error('no se encontro cell');
 		}
 	}
+
 }
 
-const loadCellsInfo = (c: number): IJCellInformation[] => {
-	let out: IJCellInformation[] = [];
-	try {
-		let pathName: string = __dirname + `/../../test/CellsInfo${c}.json`;
-		out = JSON.parse(fs.readFileSync(pathName).toString());
-	} catch (e) {
-		
-	}
-	return out;
-}
-
-const saveCellsInfo = (mapCells: Map<number,JCell>): void => {
-	let pathName: string = __dirname + `/../../test/CellsInfo${mapCells.size}.json`;
-	let data: IJCellInformation[] = [];
-	mapCells.forEach( (cell: JCell) => {
-		data[cell.id] = cell.info;
-	})
-	fs.writeFileSync(pathName, JSON.stringify(data));
-}

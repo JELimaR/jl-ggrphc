@@ -1,16 +1,13 @@
-import  fs from 'fs';
-import DrawerMap from "./DrawerMap";
-import RandomNumberGenerator from "./Geom/RandomNumberGenerator";
+
 import JCell from "./Voronoi/JCell";
 import JDiagram from "./Voronoi/JDiagram";
 import JPoint from "./Geom/JPoint";
-import chroma from 'chroma-js';
-import JRegionMap, { IJRegionInfo } from './JRegionMap';
+import JRegionMap, { IJContinentInfo, IJIslandInfo, JContinentMap, JCountryMap, JIslandMap, JStateMap } from './RegionMap/JRegionMap';
 
 import DataInformationFilesManager from './DataInformationLoadAndSave';
 const dataInfoManager = DataInformationFilesManager.instance;
 
-export interface ICellContainer {
+export interface ICellContainer { // borrar
 	cells?: JCell[] | Set<JCell> | Map<number, JCell>;
 	forEachCell: (func: (c: JCell) => void) => void
 }
@@ -19,72 +16,28 @@ export const createICellContainerFromCellArray = (cells: JCell[]): ICellContaine
 	return {
 		cells: cells,
 		forEachCell: (func: (jc: JCell) => void) => {
-			cells.forEach((c: JCell) => {func(c)})
-		}
-	}
-}
-
-export interface IJContinentInfo extends IJRegionInfo {
-	id: number;
-}
-
-export class JContinentMap extends JRegionMap {
-	private _id: number;
-
-	constructor(id: number, world: JWorldMap, info?: IJContinentInfo | JRegionMap) {
-		const iri: IJRegionInfo | undefined = (info instanceof JRegionMap) ? info.getInterface() : info;
-		super(world, iri);
-		this._id = id;
-	}
-
-	get id(): number { return this._id }
-	getInterface(): IJIslandInfo {
-		return {
-			id: this._id,
-			...super.getInterface()
-		}
-	}
-
-}
-
-export interface IJIslandInfo extends IJRegionInfo {
-	id: number;
-}
-
-export class JIslandMap extends JRegionMap {
-	constructor(private _id: number, world: JWorldMap, info?: IJRegionInfo,) {
-		super(world, info);
-	}
-
-	get id(): number {return this._id}
-
-	getInterface(): IJIslandInfo {
-		return {
-			id: this._id,
-			...super.getInterface()
+			cells.forEach((c: JCell) => { func(c) })
 		}
 	}
 }
 
 export default class JWorldMap implements ICellContainer {
 
-    private _diagram: JDiagram;
-	public _islands: JIslandMap[] = [];
-	public _continents: JContinentMap[] = [];
+	private _diagram: JDiagram;
+	private _islands: JIslandMap[] = [];
+	private _continents: JContinentMap[] = [];
 
-    constructor(d: JDiagram) {
-        this._diagram = d;
-		this.smoothHeight();
-		// this.smoothHeight();
-		// this.smoothHeight();
+	constructor(d: JDiagram) {
+		this._diagram = d;
 
 		// islands
+		console.log('calculate and setting island')
 		console.time('set Islands');
 		let regionInfoArr: IJIslandInfo[] = dataInfoManager.loadIslandsInfo(this.diagram.cells.size);
 		if (regionInfoArr.length > 0) {
 			regionInfoArr.forEach((iii: IJIslandInfo, i: number) => {
 				this._islands.push(
-					new JIslandMap(i, this, iii)
+					new JIslandMap(i, this._diagram, iii)
 				);
 			})
 		} else {
@@ -94,25 +47,35 @@ export default class JWorldMap implements ICellContainer {
 		console.timeEnd('set Islands');
 
 		// continents
-		console.time('set continents');
-		let continentsInfoArr: IJContinentInfo[] = dataInfoManager.loadContinentsInfo(this.diagram.cells.size);
-		if (continentsInfoArr.length > 0) {
-			continentsInfoArr.forEach((ici: IJContinentInfo, i: number) => {
-				this._continents.push(
-					new JContinentMap(i, this, ici)
-				);
-			})
-		} else {
-			this.generateContinentList();
-			dataInfoManager.saveContinentsInfo(this._continents, this.diagram.cells.size);
-		}
-		this._continents.forEach((cont: JContinentMap) => { console.log(cont.id, cont.area) })
-		console.timeEnd('set continents');
 
-		console.log('cantidad de islands', this._islands.length);
-    }
+		// console.log('calculate and setting continents')
+		// console.time('set continents');
+		// let continentsInfoArr: IJContinentInfo[] = dataInfoManager.loadContinentsInfo(this.diagram.cells.size);
+		// if (continentsInfoArr.length > 0) {
+		// 	continentsInfoArr.forEach((ici: IJContinentInfo, i: number) => {
+		// 		this._continents.push(
+		// 			new JContinentMap(i, this._diagram, ici)
+		// 		);
+		// 	})
+		// } else {
+		// 	this.generateContinentList();
+		// 	dataInfoManager.saveContinentsInfo(this._continents, this.diagram.cells.size);
+		// }
+		// console.timeEnd('set continents');
 
-	generateIslandList(): void {
+
+		// countries and states
+		// console.log('calculating and setting states')
+		// console.time('set states');
+		// this._continents.forEach((jcm: JContinentMap, idx: number) => {
+		// 	jcm.generateStates();
+		// 	jcm.setCountries();
+		// })
+		// console.timeEnd('set states');
+
+	}
+
+	private generateIslandList(): void {
 		let lista: Map<number, JCell> = new Map<number, JCell>();
 		this._diagram.forEachCell((c: JCell) => {
 			if (c.isLand) lista.set(c.id, c);
@@ -125,14 +88,18 @@ export default class JWorldMap implements ICellContainer {
 			cell.mark();
 			lista.delete(cell.id);
 
-			let reg: JIslandMap = new JIslandMap(currentId, this);
+			let reg: JIslandMap = new JIslandMap(currentId, this.diagram);
 			reg.addCell(cell);
 
 			let qeue: Map<number, JCell> = new Map<number, JCell>();
 			this._diagram.getNeighbors(cell).forEach((ncell: JCell) => {
 				qeue.set(ncell.id, ncell)
 			});
-			while (qeue.size > 0) {
+
+			console.log('island:', currentId);
+			let times: number = 0;
+			while (qeue.size > 0 && times < this._diagram.cells.size) {
+				times++;
 				const neigh: JCell = qeue.entries().next().value[1];
 				qeue.delete(neigh.id);
 				lista.delete(neigh.id);
@@ -144,20 +111,25 @@ export default class JWorldMap implements ICellContainer {
 						qeue.set(nnn.id, nnn);
 					}
 				})
+				if (reg.cells.size % 10000 == 0) console.log('island:', currentId, `hay ${reg.cells.size}`)
 			}
+
+			if (qeue.size > 0) throw new Error(`se supero el numero de cells: ${this._diagram.cells.size} en generateIslandList`)
+			console.log('area:', reg.area)
 			this._islands.push(reg);
 		}
 		// ordenar
+		console.log(`sorting island`)
 		this._islands.sort((a: JIslandMap, b: JIslandMap) => { return b.area - a.area });
 
 		this._diagram.forEachCell((c: JCell) => { c.dismark(); })
 	}
 
-	generateContinentList(): void {
-		this._continents[4] = new JContinentMap(4, this);
+	private generateContinentList(): void {
+		this._continents[4] = new JContinentMap(4, this._diagram);
 		this._islands.forEach((isl: JIslandMap, i: number) => {
 			if (i < 3) {
-				this._continents[i] = new JContinentMap(i, this);
+				this._continents[i] = new JContinentMap(i, this._diagram);
 				this._continents[i].addRegion(isl);
 			} else {
 				const c: JCell = isl.cells.entries().next().value[1];
@@ -177,49 +149,85 @@ export default class JWorldMap implements ICellContainer {
 			}
 		});
 		// cont 0 divir en 2
+		console.log('dividing cont 0')
 		let plist: JPoint[][] = [
-			[new JPoint(50, -20), new JPoint(45, -30), new JPoint(47, -37), new JPoint(60, -60)],
 			[new JPoint(40, -30), new JPoint(22, -45), new JPoint(40, -60)],
+			[new JPoint(50, -20), new JPoint(45, -30), new JPoint(47, -37), new JPoint(60, -60)],
 		];
 
 		const twoConts = this._continents[0].divideInSubregions(plist);
-		this._continents[0] = new JContinentMap(0, this, twoConts[0]);
-		this._continents[3] = new JContinentMap(3, this, twoConts[1]);
+		this._continents[0] = new JContinentMap(0, this._diagram, twoConts[1]);
+		this._continents[3] = new JContinentMap(3, this._diagram, twoConts[0]);
 	}
 
-	get diagram(): JDiagram {return this._diagram}
-	get cells(): any {return this._diagram.cells}
+	get diagram(): JDiagram { return this._diagram }
+	get cells(): any { return this._diagram.cells }
+	get continents(): JContinentMap[] { return this._continents }
+	get countries(): JCountryMap[] {
+		let out: JCountryMap[] = [];
+		this._continents.forEach((continent: JContinentMap) => {
+			continent.countries.forEach((jcm: JCountryMap) => {
+				out.push(jcm);
+			})
+		})
+		return out;
+	}
+	get states(): Map<string, JStateMap> {
+		let out: Map<string, JStateMap> = new Map<string, JStateMap>();
+		this._continents.forEach((continent: JContinentMap) => {
+			continent.states.forEach((jsm: JStateMap) => {
+				out.set(jsm.id, jsm);
+			})
+		})
+		return out;
+	}
 
 	forEachCell(func: (c: JCell) => void) {
 		this._diagram.forEachCell(func);
 	}
 
-	private smoothHeight() {
-		this._diagram.forEachCell((c: JCell) => {
-			c.mark();
-			let ht: number = c.height;
-			let cant: number = 1;
-			let ns: JCell[] = this._diagram.getNeighbors(c)
-			ns.forEach((n: JCell) => {
-				cant++;
-				if (n.isLand) {
-					if (n.isMarked()) {
-						ht += n.prevHeight;
-					} else {
-						ht += n.height;
-					}
-				} else {
-					ht += 0.15;
-				}
-			})
-			c.height = ht/cant;
-		})
-		this._diagram.forEachCell((c: JCell) => {
-			c.dismark();
-		})
-	}
-
-	private generateMoisture(): void {
-		console.log('generating moisture');
-	}
+	// private generateMoisture(): void {
+	// 	console.log('generating moisture');
+	// }
 }
+
+// const generatePieceList = (element: JRegionMap/*, regionGenerator: () => JRegionMap*/): JRegionMap[] => {
+// 	let out = [];
+// 	let lista: Map<number, JCell> = new Map<number, JCell>();
+// 	element.forEachCell((c: JCell) => {
+// 		if (c.isLand) lista.set(c.id, c);
+// 	})
+
+// 	while (lista.size > 0) {
+// 		const cell: JCell = lista.entries().next().value[1];
+// 		cell.mark();
+// 		lista.delete(cell.id);
+
+// 		let reg: JRegionMap = new JRegionMap(element.diagram);
+// 		reg.addCell(cell);
+
+// 		let qeue: Map<number, JCell> = new Map<number, JCell>();
+// 		element.diagram.getNeighbors(cell).forEach((ncell: JCell) => {
+// 			qeue.set(ncell.id, ncell)
+// 		});
+// 		while (qeue.size > 0) {
+// 			const neigh: JCell = qeue.entries().next().value[1];
+// 			qeue.delete(neigh.id);
+// 			lista.delete(neigh.id);
+// 			neigh.mark();
+// 			reg.addCell(neigh);
+
+// 			element.diagram.getNeighbors(neigh).forEach((nnn: JCell) => {
+// 				if (nnn.isLand && !nnn.isMarked() && !qeue.has(nnn.id)) {
+// 					qeue.set(nnn.id, nnn);
+// 				}
+// 			})
+// 		}
+// 		out.push(reg);
+// 	}
+// 	// ordenar
+// 	out.sort((a: JRegionMap, b: JRegionMap) => { return b.area - a.area });
+
+// 	element.forEachCell((c: JCell) => { c.dismark(); })
+// 	return out;
+// }
