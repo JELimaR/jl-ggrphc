@@ -42,7 +42,7 @@ export default class JCell {
 	}
 
 	get info(): IJCellInformation { return this._cellInformation!.getInterface() }
-	set heighInfo(info: IJCellInformation) {
+	set heighInfo(info: IJCellInformation | undefined) {
 		this._cellInformation = new JCellInformation(this, info);
 	}
 

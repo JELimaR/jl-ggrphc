@@ -12,6 +12,7 @@ import JPoint from "../Geom/JPoint";
 // }
 
 const MAXROT: number = 23;
+const BOLTZMAN: number = 5.67 * Math.pow(10,-8);
 
 interface IDay {
   d: number;
@@ -23,6 +24,17 @@ interface ITempPerDay {
   tempLat: number;
 }
 
+/**
+ * Temperatura en funcion de la latitud diaria
+ */
+export const calculateDayTempLat = (lat: number, day: number): number => {
+	const ROT: number = MAXROT * Math.sin((day - 95.5) / 378 * 2 * Math.PI)
+	return (Math.cos((lat - ROT) * Math.PI / 180) + 0.4) / 1.4;
+}
+
+/**
+ * Temperatura en funcion de la latitud diaria
+ */
 export const generateTempLatArrPerDay = (lat: number): ITempPerDay[] => {
   let daysArr: IDay[] = [];
   let rotDayArr: number[] = [];
@@ -33,13 +45,13 @@ export const generateTempLatArrPerDay = (lat: number): ITempPerDay[] => {
       m: (Math.floor((d - 1) / 63) * 2 + 1) + (((d - 1) % 63) > 31 ? 1 : 0)
     })
     rotDayArr.push(
-      MAXROT * Math.sin((d - 95.5) / 378 * 2 * Math.PI)
+      MAXROT * Math.sin((d - 112.5) / 378 * 2 * Math.PI)
     )
   }
 
   let out: ITempPerDay[] = [];
   daysArr.forEach((idm: IDay) => {
-    let tmpValue = Math.cos((lat - rotDayArr[idm.d]) * Math.PI / 180);
+    let tmpValue = calculateDayTempLat(lat, idm.d)/* Math.cos((lat - rotDayArr[idm.d]) * Math.PI / 180);*/
     out.push({
       tempLat: tmpValue,
       idm: idm
@@ -49,6 +61,9 @@ export const generateTempLatArrPerDay = (lat: number): ITempPerDay[] => {
   return out;
 }
 
+/**
+ * Temperatura media en funcion de la latitud por mes
+ */
 export const generateTempLatArrPerMonth = (lat: number): { month: number, tempLat: number }[] => {
   let out: { month: number, tempLat: number }[] = [];
 
@@ -72,6 +87,25 @@ export const generateTempLatArrPerMonth = (lat: number): { month: number, tempLa
   return out;
 }
 
+export const calculateMonthTempLat = (lat: number, month: number): number => {
+	const tempArr = generateTempLatArrPerMonth(lat);
+	return tempArr[month].tempLat;
+}
+
+/**
+ * Temperatura promedio en funcion de la latitud anual
+ */
+export const calculateTempPromPerLat = (lat: number): number => {
+  let out: number = 0;
+
+  const tempPerDay: ITempPerDay[] = generateTempLatArrPerDay(lat);
+
+	tempPerDay.forEach((itpd: ITempPerDay) => {
+		out += itpd.tempLat;
+	})
+  
+  return out/378;
+}
 
 
 // const generateGridTempLatArr = (gridgran: number) => {

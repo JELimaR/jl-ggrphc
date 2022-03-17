@@ -81,8 +81,7 @@ export default class JRegionMap extends JWMap  {
 			YMAXDIS: (YMAX-YMIN)+0.3
 		}
 	}
-
-
+	
 	private updateLimitCellList(): void {
 		this._limitCellList.forEach((cellId: number) => {
 			const cell = this._cells.get(cellId);
@@ -366,7 +365,6 @@ export class JContinentMap extends JRegionMap {
 				this.countries.push(jcm);
 			})
 		}
-
 	}
 
 }

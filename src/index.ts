@@ -15,6 +15,8 @@ import JCell from './Voronoi/JCell';
 import GenerateMapVoronoiSites from './Voronoi/GenerateMapVoronoiSites';
 import chroma from 'chroma-js';
 import JHeightMap from './heightmap/JHeightMap';
+import JClimateMap from './heightmap/JClimateMap';
+import {calculateDayTempLat, calculateMonthTempLat, calculateTempPromPerLat} from './heightmap/JTempFunctions';
 
 const tam: number = 3600;
 let SIZE: JVector = new JVector({ x: tam, y: tam / 2 });
@@ -39,7 +41,7 @@ const generator: JMapGenerator = new JMapGenerator(TOTAL);
 let jhm: JHeightMap = generator.generateHeightMap();
 
 dm.drawFondo()
-dm.drawCellMap(jhm, JCellToDrawEntryFunctions.heigh(1));
+// dm.drawCellMap(jhm, JCellToDrawEntryFunctions.heighLand(1));
 // dm.drawArr(jwm.continents);
 // const idx = 158//153; // 77 - 139 - 158 - 161
 // const country = jwm.countries[idx-1];
@@ -105,7 +107,7 @@ Generar grilla
 
 
 let grid: JPoint[] = [];
-const gridgran: number = 5;
+const gridgran: number = 15;
 for (let i = -180; i <= 180; i += gridgran) {
   for (let j = -90; j <= 90; j += gridgran) {
     grid.push(new JPoint(i, j));
@@ -119,36 +121,31 @@ console.log(361 * 181)
  * 
  * sol y temp
  */
-interface IDay {
-  d: number;
-  m: number;
-}
 
-let daysArr: IDay[] = [];
-const MAXROT: number = 23;
-let rotDayArr: number[] = [];
+// const BOLTZMAN: number = 5.67 * Math.pow(10,-8);
 
-for (let d = 1; d <= 378; d++) {
-  daysArr.push({
-    d,
-    m: (Math.floor((d - 1) / 63) * 2 + 1) + (((d - 1) % 63) > 31 ? 1 : 0)
-  })
-  rotDayArr.push(
-    MAXROT * Math.sin((d - 95.5) / 378 * 2 * Math.PI)
-  )
-}
-
-const TODAY = 95;
+const TODAY = 0;
 const colorScale = chroma.scale('Spectral').domain([1, 0]);
 grid.forEach((gp: JPoint) => {
-  let tmpValue = Math.cos((gp.y - rotDayArr[TODAY]) * Math.PI / 180);
-  // console.log(tmpValue)
-  dm.drawDot(gp, {
+  let tmpValue /*= calculateDayTempLat(gp.y, TODAY);*/
+	tmpValue = calculateTempPromPerLat(gp.y);
+  // console.log(Math.pow(342*tmpValue/BOLTZMAN,0.25)-250)
+  /*
+	dm.drawDot(gp, {
     fillColor: colorScale(tmpValue).hex(),
     strokeColor: colorScale(tmpValue).hex()
-  }, .2)
+  }, 1)
+	*/
 })
 
+const jcm: JClimateMap = new JClimateMap(jhm.diagram);
+dm.drawCellMap(jcm, (c: JCell): IDrawEntry => {
+		let color: string = colorScale(jcm._temperaturesCellMap.get(c.id)).hex();
+		return {
+			fillColor: color,
+			strokeColor: color
+		}
+	})
 
 /**
  * 
@@ -156,7 +153,7 @@ grid.forEach((gp: JPoint) => {
  */
 // let ini: JPoint;
 // let ent: IDrawEntry;
-// let jgranu: number = 20;
+// let jgranu: number = 10;
 // let dotsize: number = 0.5;
 // // alisios
 // ent = {
@@ -166,7 +163,7 @@ grid.forEach((gp: JPoint) => {
 
 // for (let j = -200; j <= 200; j += jgranu) {
 
-//   ini = new JPoint(j, 30)
+//   ini = new JPoint(j, 30);
 //   dm.drawDot(ini, ent, 1);
 
 //   for (let i = 200; i >= 0; i--) {
@@ -174,7 +171,7 @@ grid.forEach((gp: JPoint) => {
 //     const x = Math.sin((ini.y - 30) / 30 * Math.PI / 2);
 //     let nuevo: JPoint = JPoint.add(ini, new JPoint(x, y));
 //     dm.drawDot(nuevo, ent, dotsize);
-//     ini = nuevo;
+// 	  ini = nuevo;
 //   }
 
 //   ini = new JPoint(j, -30)
@@ -188,7 +185,8 @@ grid.forEach((gp: JPoint) => {
 //     ini = nuevo;
 //   }
 // }
-// // westerns
+
+// westerns
 // ent = {
 //   strokeColor: `#5762D5`,
 //   fillColor: `#5762D5`
