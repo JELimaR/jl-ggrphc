@@ -5,6 +5,7 @@ import VoronoiDiagramMapCreator from './Voronoi/VoronoiDiagramMapCreator';
 import JDiagram from './Voronoi/JDiagram'
 import JWorldMap from './JWorldMap';
 import JHeightMap from './heightmap/JHeightMap';
+import JClimateMap from './heightmap/JClimateMap';
 
 
 export default class JMapGenerator {
@@ -30,5 +31,8 @@ export default class JMapGenerator {
 
 	generateHeightMap(): JHeightMap {
 		return new JHeightMap(this._diagram);
+	}
+	generateClimateMap(hm: JHeightMap): JClimateMap {
+		return new JClimateMap(this._diagram, hm);
 	}
 }

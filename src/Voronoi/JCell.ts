@@ -51,6 +51,10 @@ export default class JCell {
 	get center(): JPoint { return this._site.point }
 	get isLand(): boolean { return this._cellInformation!.heightType === 'land' }
 
+	// ver estos
+	set islandId(id: number) { this._cellInformation!.island = id; }
+	get islandId(): number { return this._cellInformation!.island; }
+
 	get allVertices(): JPoint[] {
 		let out: JPoint[] = [];
 		for (let he of this._halfedges) {

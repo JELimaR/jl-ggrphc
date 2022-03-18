@@ -137,15 +137,22 @@ grid.forEach((gp: JPoint) => {
   }, 1)
 	*/
 })
-
-const jcm: JClimateMap = new JClimateMap(jhm.diagram);
+let color: string
+const jcm: JClimateMap = generator.generateClimateMap(jhm);
 dm.drawCellMap(jcm, (c: JCell): IDrawEntry => {
-		let color: string = colorScale(jcm._temperaturesCellMap.get(c.id)).hex();
-		return {
-			fillColor: color,
-			strokeColor: color
-		}
-	})
+	
+	let tarr: number[] = jcm._tempCellMonth.get(c.id)!;
+	color = colorScale(tarr[6]).hex();
+	/*
+	let value: number = jcm._tempCellCap.get(c.id)!;
+	color = colorScale(value).hex();
+  */
+	return {
+		fillColor: color,
+		strokeColor: color
+	}
+})
+
 
 /**
  * 

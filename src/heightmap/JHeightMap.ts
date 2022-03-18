@@ -3,7 +3,7 @@ import DataInformationFilesManager from '../DataInformationLoadAndSave';
 import { IJCellInformation } from "../Voronoi/JCellInformation";
 import JCell from "../Voronoi/JCell";
 import JWMap from "../JWMap";
-import { IJIslandInfo, JIslandMap } from "../RegionMap/JRegionMap";
+import JRegionMap, { IJIslandInfo, JIslandMap } from "../RegionMap/JRegionMap";
 const dataInfoManager = DataInformationFilesManager.instance;
 
 
@@ -19,16 +19,12 @@ export default class JHeightMap extends JWMap {
 		console.log('calculate and setting height');
 		console.time('set height info');
 
-    const loadedInfo: IJCellInformation[] = dataInfoManager.loadCellsInfo(cellsMap.size); // cambiar por heightinfo
+    const loadedInfo: IJCellInformation[] = dataInfoManager.loadCellsHeigth(cellsMap.size); // cambiar por heightinfo
     cellsMap.forEach((cell: JCell) => {
       const info: IJCellInformation | undefined = loadedInfo[cell.site.id];
       cell.heighInfo = info;
     })
 
-    if (loadedInfo.length === 0) {
-      this.smoothHeight();
-      dataInfoManager.saveCellsInfo(cellsMap, cellsMap.size);
-    }
     console.timeEnd('set height info');
 
     // islands
@@ -43,9 +39,17 @@ export default class JHeightMap extends JWMap {
 			})
 		} else {
 			this.generateIslandList();
-			dataInfoManager.saveIslandsInfo(this._islands, this.diagram.cells.size);
 		}
 		console.timeEnd('set Islands');
+
+		// guardar info
+		if (loadedInfo.length === 0) {
+      this.smoothHeight();
+      dataInfoManager.saveCellsHeigth(cellsMap, cellsMap.size);
+    }
+		if (regionInfoArr.length === 0) {
+			dataInfoManager.saveIslandsInfo(this._islands, this.diagram.cells.size);
+		}
   }
 
   private smoothHeight() {
@@ -88,6 +92,7 @@ export default class JHeightMap extends JWMap {
 
 			let reg: JIslandMap = new JIslandMap(currentId, this.diagram);
 			reg.addCell(cell);
+			cell.islandId = reg.id; // nuevo
 
 			let qeue: Map<number, JCell> = new Map<number, JCell>();
 			this.diagram.getNeighbors(cell).forEach((ncell: JCell) => {
@@ -103,6 +108,7 @@ export default class JHeightMap extends JWMap {
 				lista.delete(neigh.id);
 				neigh.mark();
 				reg.addCell(neigh);
+				neigh.islandId = reg.id; // nuevo
 
 				this.diagram.getNeighbors(neigh).forEach((nnn: JCell) => {
 					if (nnn.isLand && !nnn.isMarked() && !qeue.has(nnn.id)) {
@@ -121,5 +127,15 @@ export default class JHeightMap extends JWMap {
 		this._islands.sort((a: JIslandMap, b: JIslandMap) => { return b.area - a.area });
 
 		this.diagram.forEachCell((c: JCell) => { c.dismark(); })
+	}
+
+	get islands() {return this._islands }
+
+	get landRegion(): JRegionMap {
+		let out: JRegionMap = new JRegionMap(this.diagram);
+		this._islands.forEach((isl: JIslandMap) => {
+			out.addRegion(isl);
+		})
+		return out;
 	}
 }

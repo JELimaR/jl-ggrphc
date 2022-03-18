@@ -20,6 +20,7 @@ export interface IJCellInformation {
 	height: number;
 	prevHeight: number;
 	heightType: TypeCellheight;
+	island: number;
 }
 
 export default class JCellInformation {
@@ -29,6 +30,7 @@ export default class JCellInformation {
 	private _height: number;
 	private _prevHeight: number = 0;
 	private _heightType: TypeCellheight;
+	private _island: number = -1;
 
 	constructor(c: JCell, info: IJCellInformation | undefined) {
 		this._cell = c;
@@ -37,6 +39,7 @@ export default class JCellInformation {
 			this._height = info.height;
 			this._prevHeight = info.prevHeight;
 			this._heightType = info.heightType;
+			this._island = info.island;
 		} else {
 			const out = this.setReliefZone();
 			this._height = Math.round(out.h*1000000)/1000000;
@@ -44,8 +47,8 @@ export default class JCellInformation {
 		}
 	}
 
-	setReliefZone(): { h: number, th: TypeCellheight} {
-		let out: {h: number, th: TypeCellheight} = { h: 0, th: 'land'};
+	setReliefZone(): { h: number, th: TypeCellheight } {
+		let out: { h: number, th: TypeCellheight } = { h: 0, th: 'land' };
 		const rfn: ()=>number = RandomNumberGenerator.makeRandomFloat(this._cell.id);
 		if (!pointInArrReg(this._cell.center.toTurfPosition(), BuffRegs)) {
 			out.h = 0.05;
@@ -87,6 +90,8 @@ export default class JCellInformation {
 		this._prevHeight = this._height;
 		this._height = h;
 	}
+	set island(id: number) { this._island = id }
+	get island(): number { return this._island }
 	// get inLandZone(): boolean {return this._heightType === ''}
 	get mark(): boolean {return this._mark}
 	set mark(b: boolean) {this._mark = b}
@@ -98,6 +103,7 @@ export default class JCellInformation {
 			height: this._height,
 			prevHeight: this._prevHeight,
 			heightType: this._heightType,
+			island: this._island,
 		}
 	}
 }

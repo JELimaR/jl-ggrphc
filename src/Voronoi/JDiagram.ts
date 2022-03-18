@@ -1,4 +1,5 @@
 import { Cell, Diagram, Halfedge, Edge, Vertex } from 'voronoijs';
+import * as turf from '@turf/turf';
 import JPoint, { JVector } from '../Geom/JPoint';
 import JCell from "./JCell";
 import JEdge from "./JEdge";
@@ -161,6 +162,42 @@ export default class JDiagram {
 		else {
 			throw new Error('no se encontro cell');
 		}
+	}
+
+	getNeighborsInWindow(cell: JCell, grades: number): JCell[] {
+		this.forEachCell((cell: JCell) => cell.dismark())
+		let out: JCell[] = [];
+		const center: JPoint = cell.center;
+		const polContainer = turf.polygon([[
+			[center.x-grades, center.y-grades],
+			[center.x-grades, center.y+grades],
+			[center.x+grades, center.y+grades],
+			[center.x+grades, center.y-grades],
+			[center.x-grades, center.y-grades],
+		]]);
+
+		let qeue: Map<number, JCell> = new Map<number, JCell>();
+		qeue.set(cell.id, cell);		
+		
+		while (qeue.size > 0) {
+			let elem: JCell = qeue.entries().next().value[1];
+			qeue.delete(elem.id)
+			
+			if (!turf.booleanDisjoint(polContainer, elem.toTurfPolygonSimple())) {
+				out.push(elem);
+				elem.mark();
+				this.getNeighbors(elem).forEach((neighElem: JCell) => {
+					if (!neighElem.isMarked()) {
+						qeue.set(neighElem.id, neighElem);
+					}
+				})
+			}			
+		}
+
+		this.forEachCell((cell: JCell) => cell.dismark())
+		//console.log(cell.id, 'out', out.length)
+
+		return out;
 	}
 
 }

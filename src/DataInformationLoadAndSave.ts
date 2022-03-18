@@ -6,6 +6,7 @@ import { IJContinentInfo, IJCountryInfo, IJIslandInfo, IJStateInfo, JContinentMa
 // import { IJDiagramInfo } from './Voronoi/JDiagram';
 // import { IJEdgeInfo } from './Voronoi/JEdge';
 import { IJCellInformation } from './Voronoi/JCellInformation';
+import { JCellClimate, IJCellClimateInfo } from './heightmap/JClimateMap'
 
 export default class DataInformationFilesManager {
 	static _instance: DataInformationFilesManager;
@@ -114,12 +115,16 @@ export default class DataInformationFilesManager {
 		let pathName: string = `${this._dirPath}/${tam}/GeneratedSites.json`;
 		fs.writeFileSync(pathName, JSON.stringify(sites));
 	}
+
+	/**
+	 * cells information
+	 */
 	
-	// info cell
-	loadCellsInfo(tam: number): IJCellInformation[] {
+	// heigth info cell
+	loadCellsHeigth(tam: number): IJCellInformation[] {
 		let out: IJCellInformation[] = [];
 		try {
-			let pathName: string = `${this._dirPath}/${tam}/CellsInfo.json`;
+			let pathName: string = `${this._dirPath}/${tam}/CellsInfo/heigth.json`;
 			out = JSON.parse(fs.readFileSync(pathName).toString());
 		} catch (e) {
 			
@@ -127,12 +132,34 @@ export default class DataInformationFilesManager {
 		return out;
 	}
 
-	saveCellsInfo(mapCells: Map<number, JCell>, tam: number): void {
-		fs.mkdirSync(`${this._dirPath}/${tam}`, {recursive: true});
-		let pathName: string = `${this._dirPath}/${tam}/CellsInfo.json`;
+	saveCellsHeigth(mapCells: Map<number, JCell>, tam: number): void {
+		fs.mkdirSync(`${this._dirPath}/${tam}/CellsInfo`, {recursive: true});
+		let pathName: string = `${this._dirPath}/${tam}/CellsInfo/heigth.json`;
 		let data: IJCellInformation[] = [];
 		mapCells.forEach( (cell: JCell) => {
 			data[cell.id] = cell.info;
+		})
+		fs.writeFileSync(pathName, JSON.stringify(data));
+	}
+
+	// climate info cell
+	loadCellsClimate(tam: number): IJCellClimateInfo[] {
+		let out: IJCellClimateInfo[] = [];
+		try {
+			let pathName: string = `${this._dirPath}/${tam}/CellsInfo/climate.json`;
+			out = JSON.parse(fs.readFileSync(pathName).toString());
+		} catch (e) {
+			
+		}
+		return out;
+	}
+
+	saveCellsClimate(mapCells: Map<number, JCellClimate>, tam: number): void {
+		fs.mkdirSync(`${this._dirPath}/${tam}/CellsInfo`, {recursive: true});
+		let pathName: string = `${this._dirPath}/${tam}/CellsInfo/climate.json`;
+		let data: IJCellClimateInfo[] = [];
+		mapCells.forEach( (cell: JCellClimate) => {
+			data[cell.info.id] = cell.info;
 		})
 		fs.writeFileSync(pathName, JSON.stringify(data));
 	}
