@@ -141,8 +141,8 @@ let color: string
 const jcm: JClimateMap = generator.generateClimateMap(jhm);
 dm.drawCellMap(jcm, (c: JCell): IDrawEntry => {
 	
-	let tarr: number[] = jcm._tempCellMonth.get(c.id)!;
-	color = colorScale(tarr[6]).hex();
+	let tarr: number[] = jcm._cellClimate.get(c.id)!._tempMonth;
+	color = colorScale(tarr[3]).hex();
 	/*
 	let value: number = jcm._tempCellCap.get(c.id)!;
 	color = colorScale(value).hex();

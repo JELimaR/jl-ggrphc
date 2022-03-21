@@ -35,6 +35,7 @@ export class JCellClimate {
 		return {
 			id: this._cell.id,
 			tempCap: this._tempCap,
+			tempMonth: this._tempMonth,
 		}
 	}
 }
@@ -49,7 +50,7 @@ export default class JClimateMap extends JWMap {
 
 	_cellClimate: Map<number, JCellClimate> = new Map<number, JCellClimate>();
 	
-  constructor(d: JDiagram, hm: JHeightMap) {
+  constructor(d: JDiagram, hm: JHeightMap) { // no se precisa
     super(d);
     const cellsMap = this.diagram.cells;
 
@@ -58,36 +59,43 @@ export default class JClimateMap extends JWMap {
 		console.time('set temp info');
 
     const loadedInfo: IJCellClimateInfo[] = dataInfoManager.loadCellsClimate(cellsMap.size);
-		/*
+	
+		if (loadedInfo.length > 0) {
+			loadedInfo.forEach((data: IJCellClimateInfo) => {
+				this._cellClimate.set(data.id, new JCellClimate( cellsMap.get(data.id)!, data))
+			})
+		} else {
+				/*
      * capability
 		 */
-		this.calculateCapCell(hm);
-		this.smoothCap();
-		/*
-     * temp
-		 */
-    cellsMap.forEach((cell: JCell) => {
-			// console.log(TempFunctions.calculateTempPromPerLat(cell.center.y));
-			const ict: ICellTempLat = {
-				tempLatMed: TempFunctions.calculateTempPromPerLat(cell.center.y),
-				tempLatMin: TempFunctions.calculateTempMinPerLat(cell.center.y),
-				tempLatMonth: TempFunctions.generateTempLatArrPerMonth(cell.center.y).map((v) => v.tempLat)
-			}
-			// this._temperaturesCellMap.set(cell.id, ict)
-			
-			let tarr: number[] = [];
-			ict.tempLatMonth.forEach((mt: number, idx: number) => {
-				const tv: number = ict.tempLatMed + (ict.tempLatMed - ict.tempLatMonth[idx]) * this._tempCellCap.get(cell.id)!;
-				tarr.push(tv);
+			this.calculateCapCell(hm);
+			this.smoothCap();
+			/*
+			 * temp
+			 */
+			cellsMap.forEach((cell: JCell) => {
+				// console.log(TempFunctions.calculateTempPromPerLat(cell.center.y));
+				const ict: ICellTempLat = {
+					tempLatMed: TempFunctions.calculateTempPromPerLat(cell.center.y),
+					tempLatMin: TempFunctions.calculateTempMinPerLat(cell.center.y),
+					tempLatMonth: TempFunctions.generateTempLatArrPerMonth(cell.center.y).map((v) => v.tempLat)
+				}
+				// this._temperaturesCellMap.set(cell.id, ict)
+				
+				let tarr: number[] = [];
+				ict.tempLatMonth.forEach((mt: number, idx: number) => {
+					const tv: number = ict.tempLatMed + (ict.tempLatMed - ict.tempLatMonth[idx]) * this._tempCellCap.get(cell.id)!;
+					tarr.push(tv);
+				})
+				this._tempCellMonth.set(cell.id, tarr)
+				
+				this._cellClimate.set(cell.id, new JCellClimate( cell, {
+					id: cell.id,
+					tempCap: this._tempCellCap.get(cell.id)!,
+					tempMonth: tarr,
+				}))
 			})
-			this._tempCellMonth.set(cell.id, tarr)
-			
-			this._cellClimate.set(cell.id, new JCellClimate( cell, {
-				id: cell.id,
-				tempCap: this._tempCellCap.get(cell.id)!,
-				tempMonth: tarr,
-			}))
-    })
+		}
 
     if (loadedInfo.length === 0) {
       dataInfoManager.saveCellsClimate(this._cellClimate, this._cellClimate.size);
