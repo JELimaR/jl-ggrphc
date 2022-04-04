@@ -25,33 +25,30 @@ interface ITempPerDay {
 }
 
 /**
- * Temperatura en funcion de la latitud diaria
+ * Temperatura en funcion de la latitud y el dia
  */
 export const calculateDayTempLat = (lat: number, day: number): number => {
-	const ROT: number = MAXROT * Math.sin((day - 112) / 378 * 2 * Math.PI)
-	return (Math.cos((lat - ROT) * Math.PI / 180) + 0.0) / 1.0;
+	const ROT: number = MAXROT * Math.sin((day + 77) / 378 * 2 * Math.PI);
+	return (Math.cos((lat - ROT) * Math.PI / 180) + 0.4) / 1.4;
 }
 
 /**
- * Temperatura en funcion de la latitud diaria
+ * Arreglo con Temperatura por día en funcion de la latitud
  */
 export const generateTempLatArrPerDay = (lat: number): ITempPerDay[] => {
 	let daysArr: IDay[] = [];
-	let rotDayArr: number[] = [];
+	// let rotDayArr: number[] = [];
 
 	for (let d = 1; d <= 378; d++) {
 		daysArr.push({
 			d,
 			m: (Math.floor((d - 1) / 63) * 2 + 1) + (((d - 1) % 63) > 31 ? 1 : 0)
 		})
-		rotDayArr.push(
-			MAXROT * Math.sin((d - 112) / 378 * 2 * Math.PI)
-		)
 	}
 
 	let out: ITempPerDay[] = [];
 	daysArr.forEach((idm: IDay) => {
-		let tmpValue = calculateDayTempLat(lat, idm.d)/* Math.cos((lat - rotDayArr[idm.d]) * Math.PI / 180);*/
+		let tmpValue = calculateDayTempLat(lat, idm.d);
 		out.push({
 			tempLat: tmpValue,
 			idm: idm
@@ -62,7 +59,7 @@ export const generateTempLatArrPerDay = (lat: number): ITempPerDay[] => {
 }
 
 /**
- * Temperatura media en funcion de la latitud por mes
+ * Arreglo con Temperatura media por mes en funcion de la latitud
  */
 export const generateTempLatArrPerMonth = (lat: number): { month: number, tempLat: number }[] => {
 	let out: { month: number, tempLat: number }[] = [];
@@ -93,7 +90,7 @@ export const calculateMonthTempLat = (lat: number, month: number): number => {
 }
 
 /**
- * Temperatura promedio en funcion de la latitud anual
+ * Temperatura media anual en funcion de la latitud
  */
 export const calculateTempPromPerLat = (lat: number): number => {
 	let out: number = 0;
@@ -108,15 +105,17 @@ export const calculateTempPromPerLat = (lat: number): number => {
 }
 
 /**
- * Temperatura minima en funcion de la latitud anual
+ * Temperatura minima anual en funcion de la latitud
  */
 export const calculateTempMinPerLat = (lat: number): number => {
-	
 	const tempPerDay: ITempPerDay[] = generateTempLatArrPerDay(lat);
-
 	return Math.min(...tempPerDay.map((itpd: ITempPerDay) => itpd.tempLat));
 }
 
+export const calculateTempMaxPerLat = (lat: number): number => {
+	const tempPerDay: ITempPerDay[] = generateTempLatArrPerDay(lat);
+	return Math.max(...tempPerDay.map((itpd: ITempPerDay) => itpd.tempLat));
+}
 
 // const generateGridTempLatArr = (gridgran: number) => {
 //   let daysArr: IDay[] = [];

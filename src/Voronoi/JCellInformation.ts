@@ -54,19 +54,19 @@ export default class JCellInformation {
 			out.h = 0.05;
 			out.th = 'deepocean'
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), HHRegs)) {
-			out.h = 0.85+0.15*rfn();
+			out.h = 0.88+0.200*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), HLRegs)) {
-			out.h = 0.60+0.25*rfn();
+			out.h = 0.68+0.240*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), MHRegs)) {
-			out.h = 0.45+0.20*rfn();
+			out.h = 0.44+0.280*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), MLRegs)) {
-			out.h = 0.35+0.15*rfn();
+			out.h = 0.30+0.180*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), LHRegs)) {
-			out.h = 0.30+0.10*rfn();
+			out.h = 0.24+0.080*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), LLRegs)) {
-			out.h = 0.20+0.15*rfn();
+			out.h = 0.20+0.048*rfn();
 		} else {
-			out.h = 0.15;
+			out.h = 0.18;
 			out.th = 'ocean';
 		}
 		return out;
@@ -81,9 +81,9 @@ export default class JCellInformation {
 			this._height = 0.2;
 			return;
 		}
-		if (this._heightType === 'ocean' && h > 0.15) {
+		if (this._heightType === 'ocean' && h > 0.19) {
 			this._prevHeight = this._height;
-			this._height = 0.15;
+			this._height = 0.19;
 			return
 		}
 		if (this._heightType === 'deepocean') return;

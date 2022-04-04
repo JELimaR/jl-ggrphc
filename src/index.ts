@@ -35,13 +35,13 @@ console.log(dm.getPointsBuffDrawLimits());
 console.log('center buff');
 console.log(dm.getPointsBuffCenterLimits());
 
-const TOTAL: number = 50;
+const TOTAL: number = 700;
 const generator: JMapGenerator = new JMapGenerator(TOTAL);
 // let jwm: JWorldMap = JMapGenerator.generate(TOTAL);
 let jhm: JHeightMap = generator.generateHeightMap();
 
 dm.drawFondo()
-// dm.drawCellMap(jhm, JCellToDrawEntryFunctions.heighLand(1));
+dm.drawCellMap(jhm, JCellToDrawEntryFunctions.heighLand(1));
 // dm.drawArr(jwm.continents);
 // const idx = 158//153; // 77 - 139 - 158 - 161
 // const country = jwm.countries[idx-1];
@@ -58,9 +58,8 @@ dm.drawFondo()
 // // dm.drawArr(states)
 
 // console.log(country.id, ':', country.area)
-
 dm.drawMeridianAndParallels();
-// dm.saveDrawFile('saveMap01.png');
+dm.saveDrawFile(`${TOTAL}_heightMap.png`);
 
 // console.log('drawing contries')
 // jwm.countries.forEach((jcm: JCountryMap) => {
@@ -105,6 +104,8 @@ dm.drawMeridianAndParallels();
 Generar grilla
 */
 
+let dm2: DrawerMap = new DrawerMap(SIZE, __dirname + `/../img/${TOTAL}`);
+dm2.drawFondo()
 
 let grid: JPoint[] = [];
 const gridgran: number = 15;
@@ -114,9 +115,6 @@ for (let i = -180; i <= 180; i += gridgran) {
   }
 }
 
-console.log(grid.length)
-console.log(361 * 181)
-
 /**
  * 
  * sol y temp
@@ -125,34 +123,100 @@ console.log(361 * 181)
 // const BOLTZMAN: number = 5.67 * Math.pow(10,-8);
 
 const TODAY = 0;
-const colorScale = chroma.scale('Spectral').domain([1, 0]);
+let colorScale = chroma.scale('Spectral').domain([30, -20]);
+
 grid.forEach((gp: JPoint) => {
-  let tmpValue /*= calculateDayTempLat(gp.y, TODAY);*/
-	tmpValue = calculateTempPromPerLat(gp.y);
-  // console.log(Math.pow(342*tmpValue/BOLTZMAN,0.25)-250)
+	let tempValue: number; /*= calculateDayTempLat(gp.y, TODAY);*/
+	tempValue = calculateTempPromPerLat(gp.y);
+	// console.log(Math.pow(342*tempValue/BOLTZMAN,0.25)-250)
   /*
 	dm.drawDot(gp, {
-    fillColor: colorScale(tmpValue).hex(),
-    strokeColor: colorScale(tmpValue).hex()
+    fillColor: colorScale(tempValue).hex(),
+    strokeColor: colorScale(tempValue).hex()
   }, 1)
 	*/
 })
-let color: string
+
 const jcm: JClimateMap = generator.generateClimateMap(jhm);
-dm.drawCellMap(jcm, (c: JCell): IDrawEntry => {
+
+let color: string;
+
+// meses
+colorScale = chroma.scale('Spectral').domain([30, -30]);
+const meses = [1,2,3,4,5,6,7,8,9,10,11,12];
+meses.forEach((mes: number) => {
 	
+	dm2.drawCellMap(jcm, (c: JCell): IDrawEntry => {
+		
+		let tarr: number[] = jcm._cellClimate.get(c.id)!._tempMonth;
+		let val: number = 2.5*Math.round((tarr[mes-1])/2.5);
+		color = colorScale(val).hex();
+		return {
+			fillColor: color,
+			strokeColor: color
+		}
+	})
+	
+	dm2.drawMeridianAndParallels();
+	dm2.saveDrawFile(`tempMap_mes${mes > 9 ? mes : `0${mes}`}.png`);
+
+})
+
+// temp med
+colorScale = chroma.scale('Spectral').domain([30, -30]);
+//colorScale = chroma.scale('Spectral').domain([30, -35]);
+let meds: number[] = [];
+dm2.drawCellMap(jcm, (c: JCell): IDrawEntry => {
 	let tarr: number[] = jcm._cellClimate.get(c.id)!._tempMonth;
-	color = colorScale(tarr[3]).hex();
+	let val: number = 0;
+	tarr.forEach((t: number) => val += t/12)
+
+	meds.push(val);
+	
+	color = colorScale(2.5*Math.round(val/2.5)).hex();
 	/*
 	let value: number = jcm._tempCellCap.get(c.id)!;
 	color = colorScale(value).hex();
-  */
+	*/
 	return {
 		fillColor: color,
 		strokeColor: color
 	}
 })
 
+dm2.drawMeridianAndParallels();
+dm2.saveDrawFile(`tempMapMed.png`);
+
+// temp var
+colorScale = chroma.scale('Spectral').domain([30, 0]);
+let mins: number[] = [];
+let maxs: number[] = [];
+dm2.drawCellMap(jcm, (c: JCell): IDrawEntry => {
+	let tarr: number[] = jcm._cellClimate.get(c.id)!._tempMonth;
+	const maximo = Math.max(...tarr);
+	const minimo = Math.min(...tarr);
+	maxs.push(maximo);
+	mins.push(minimo);
+	let val: number = maximo - minimo;
+	color = colorScale(val).hex();
+	/*
+	let value: number = jcm._tempCellCap.get(c.id)!;
+	color = colorScale(value).hex();
+	*/
+	return {
+		fillColor: color,
+		strokeColor: color
+	}
+})
+
+dm2.drawMeridianAndParallels();
+dm2.saveDrawFile(`tempMapVar.png`);
+
+console.log('max', Math.max(...maxs));
+console.log('min', Math.min(...mins));
+let total: number = 0;
+meds.forEach((val: number) => total+=val);
+console.log('med', total/jcm.diagram.cells.size);
 
 /**
  * 
@@ -253,8 +317,6 @@ dm.drawCellMap(jcm, (c: JCell): IDrawEntry => {
 //     ini = nuevo;
 //   }
 // }
-
-dm.saveDrawFile('saveMap01.png');
 
 console.timeEnd('all');
 

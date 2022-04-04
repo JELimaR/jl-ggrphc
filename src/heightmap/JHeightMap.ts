@@ -15,7 +15,9 @@ export default class JHeightMap extends JWMap {
     super(d);
     const cellsMap = this.diagram.cells;
 
-    // height cells
+    /*
+		 * height cells
+		 */
 		console.log('calculate and setting height');
 		console.time('set height info');
 
@@ -26,8 +28,15 @@ export default class JHeightMap extends JWMap {
     })
 
     console.timeEnd('set height info');
+		// guardar info
+		if (loadedInfo.length === 0) {
+      this.smoothHeight();
+      dataInfoManager.saveCellsHeigth(cellsMap, cellsMap.size);
+    }
 
-    // islands
+    /*
+		 * islands
+		 */
 		console.log('calculate and setting island')
 		console.time('set Islands');
 		let regionInfoArr: IJIslandInfo[] = dataInfoManager.loadIslandsInfo(this.diagram.cells.size);
@@ -43,10 +52,6 @@ export default class JHeightMap extends JWMap {
 		console.timeEnd('set Islands');
 
 		// guardar info
-		if (loadedInfo.length === 0) {
-      this.smoothHeight();
-      dataInfoManager.saveCellsHeigth(cellsMap, cellsMap.size);
-    }
 		if (regionInfoArr.length === 0) {
 			dataInfoManager.saveIslandsInfo(this._islands, this.diagram.cells.size);
 		}

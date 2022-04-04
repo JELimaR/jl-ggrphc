@@ -184,6 +184,8 @@ export default class JDiagram {
 			qeue.delete(elem.id)
 			
 			if (!turf.booleanDisjoint(polContainer, elem.toTurfPolygonSimple())) {
+			// if (elem.center.x <= center.x + grades && elem.center.x >= center.x - grades &&
+			// 	elem.center.y <= center.y + grades && elem.center.y >= center.y - grades ) {
 				out.push(elem);
 				elem.mark();
 				this.getNeighbors(elem).forEach((neighElem: JCell) => {

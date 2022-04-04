@@ -102,7 +102,7 @@ export default class JRegionMap extends JWMap  {
 
 	isInRegion(en: number | JCell): boolean {
 		const id: number = (en instanceof JCell) ? en.id : en;
-		return this._cells.get(id) !== undefined;
+		return this._cells.has(id);
 	}
 
 	addCell(c: JCell): void {
