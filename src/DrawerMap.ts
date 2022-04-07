@@ -255,7 +255,7 @@ export default class DrawerMap {
 		// meridianos
 		for (let i = 0; i < cantMer; i++) {
 			const val = 180 / (cantMer - 1) * (i) - 90;
-			const dashPattern = (val == 0) ? [1] : [5, 5];
+			const dashPattern = (val === 0) ? [1] : [5,5]
 			this.draw([new JPoint(-200, val), new JPoint(200, val)], {
 				fillColor: 'none',
 				dashPattern,
@@ -265,7 +265,7 @@ export default class DrawerMap {
 		// paralelos
 		for (let i = 0; i < cantPar; i++) {
 			const val = 360 / (cantPar - 1) * (i) - 180;
-			const dashPattern = (val == 0) ? [1] : [5, 5];
+			const dashPattern = (val === 0) ? [1] : [5,5]
 			this.draw([new JPoint(val, -100), new JPoint(val, 100)], {
 				fillColor: 'none',
 				dashPattern,
@@ -315,11 +315,11 @@ export default class DrawerMap {
 			this.context.lineTo(vertex.x, vertex.y);
 		}
 
+		if (ent.dashPattern) this.context.setLineDash(ent.dashPattern);
 		this.context.strokeStyle = ent.strokeColor;
 		if (ent.strokeColor !== 'none') this.context.stroke();
 		this.context.fillStyle = ent.fillColor;
 		if (ent.fillColor !== 'none') this.context.fill();
-		if (ent.dashPattern) this.context.setLineDash(ent.dashPattern);
 		this.context.closePath();
 	}
 

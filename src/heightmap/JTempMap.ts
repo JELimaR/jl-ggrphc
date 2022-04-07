@@ -16,17 +16,17 @@ export interface ICellTempLat {
 	tempLatMonth: number[];
 }
 
-export interface IJCellClimateInfo {
+export interface IJCellTempInfo {
 	id: number;
 	tempCap: number;
 	tempMonth: number[];
 }
 
-export class JCellClimate {
+export class JCellTemp {
 	_cell: JCell;
 	_tempCap: number = 1;
 	_tempMonth: number[];
-	constructor(cell: JCell, info: IJCellClimateInfo) {
+	constructor(cell: JCell, info: IJCellTempInfo) {
 		this._cell = cell;
 		this._tempCap = info.tempCap;
 		this._tempMonth = info.tempMonth;
@@ -35,7 +35,7 @@ export class JCellClimate {
 	get tempMonth(): number[] { return this._tempMonth }
 	set tempMonth(tempArr: number[]) { this._tempMonth = [...tempArr] }
 
-	get info(): IJCellClimateInfo {
+	get info(): IJCellTempInfo {
 		return {
 			id: this._cell.id,
 			tempCap: this._tempCap,
@@ -45,14 +45,14 @@ export class JCellClimate {
 }
 
 
-export default class JClimateMap extends JWMap {
+export default class JTempMap extends JWMap {
 
 	_temperaturesCellMap: Map<number, ICellTempLat> = new Map<number, ICellTempLat>(); // map de id y temp - borrar no se debe guardar todos esos datos
 	_tempCellMonth: Map<number, number[]> = new Map<number, number[]>();
 	_tempCellCap: Map<number, number> = new Map<number, number>();
 	_tempCellPrevCap: Map<number, number> = new Map<number, number>();
 
-	_cellClimate: Map<number, JCellClimate> = new Map<number, JCellClimate>();
+	_cellClimate: Map<number, JCellTemp> = new Map<number, JCellTemp>();
 
 	constructor(d: JDiagram, hm: JHeightMap) { // no se precisa el hm?
 		super(d);
@@ -62,17 +62,19 @@ export default class JClimateMap extends JWMap {
 		console.log('calculate and setting temp');
 		console.time('set temp info');
 
-		const loadedInfo: IJCellClimateInfo[] = dataInfoManager.loadCellsClimate(cellsMap.size);
+		const loadedInfo: IJCellTempInfo[] = dataInfoManager.loadCellsTemperature(cellsMap.size);
 
 		if (loadedInfo.length > 0) {
-			loadedInfo.forEach((data: IJCellClimateInfo) => {
-				this._cellClimate.set(data.id, new JCellClimate(cellsMap.get(data.id)!, data))
+			loadedInfo.forEach((data: IJCellTempInfo) => {
+				this._cellClimate.set(data.id, new JCellTemp(cellsMap.get(data.id)!, data))
 			})
 		} else {
 			/*
 			 * capability
 			 */
 			this.calculateCapCell(hm);
+			this.smoothCap();
+			this.smoothCap();
 			this.smoothCap();
 			/*
 			 * temp
@@ -98,7 +100,7 @@ export default class JClimateMap extends JWMap {
 				})
 				this._tempCellMonth.set(cell.id, tarr)
 
-				this._cellClimate.set(cell.id, new JCellClimate(cell, {
+				this._cellClimate.set(cell.id, new JCellTemp(cell, {
 					id: cell.id,
 					tempCap: this._tempCellCap.get(cell.id)!,
 					tempMonth: tarr,
@@ -109,7 +111,7 @@ export default class JClimateMap extends JWMap {
 		}
 
 		if (loadedInfo.length === 0) {
-			dataInfoManager.saveCellsClimate(this._cellClimate, this._cellClimate.size);
+			dataInfoManager.saveCellsTemperature(this._cellClimate, this._cellClimate.size);
 		}
 		console.timeEnd('set temp info');
 	}

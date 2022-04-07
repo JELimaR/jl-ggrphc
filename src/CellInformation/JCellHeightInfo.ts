@@ -7,7 +7,7 @@ import { LHRegs } from "../zones/LHRegs";
 import { LLRegs } from "../zones/LLRegs";
 import { MHRegs } from "../zones/MHRegs";
 import { MLRegs } from "../zones/MLRegs";
-import JCell from "./JCell";
+import JCell from "../Voronoi/JCell";
 
 export type TypeCellheight =
 	| 'deepocean'
@@ -20,10 +20,9 @@ export interface IJCellInformation {
 	height: number;
 	prevHeight: number;
 	heightType: TypeCellheight;
-	island: number;
 }
 
-export default class JCellInformation {
+export default class JCellHeightInfo {
 	private _cell: JCell;
 	private _mark: boolean = false;
 
@@ -39,7 +38,7 @@ export default class JCellInformation {
 			this._height = info.height;
 			this._prevHeight = info.prevHeight;
 			this._heightType = info.heightType;
-			this._island = info.island;
+			
 		} else {
 			const out = this.setReliefZone();
 			this._height = Math.round(out.h*1000000)/1000000;
@@ -81,12 +80,12 @@ export default class JCellInformation {
 			this._height = 0.2;
 			return;
 		}
-		if ((this._heightType === 'ocean' || this._heightType === 'deepocean') && h > 0.19) {
+		if (this._heightType === 'ocean' && h > 0.19) {
 			this._prevHeight = this._height;
 			this._height = 0.19;
 			return
 		}
-		// if (this._heightType === 'deepocean') return;
+		if (this._heightType === 'deepocean') return;
 		this._prevHeight = this._height;
 		this._height = h;
 	}
@@ -103,7 +102,6 @@ export default class JCellInformation {
 			height: this._height,
 			prevHeight: this._prevHeight,
 			heightType: this._heightType,
-			island: this._island,
 		}
 	}
 }

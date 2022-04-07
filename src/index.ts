@@ -3,8 +3,9 @@ console.time('all');
 import * as JCellToDrawEntryFunctions from './JCellToDrawEntryFunctions';
 import DrawerMap, { IDrawEntry } from './DrawerMap'
 import JPoint, { JVector } from './Geom/JPoint';
-import JMapGenerator from './JMapGenerator';
-import JWorldMap, { createICellContainerFromCellArray } from './JWorldMap';
+import JGrid from './Geom/JGrid';
+import JWorld from './JWorld';
+import { createICellContainerFromCellArray } from './JWorldMap';
 import DataInformationFilesManager from './DataInformationLoadAndSave';
 import { DivisionMaker } from './divisions/DivisionMaker';
 import { Tree } from 'jl-utlts';
@@ -12,11 +13,10 @@ import JRegionMap, { IJRegionTreeNode, JStateMap } from './RegionMap/JRegionMap'
 import statesPointsLists from './divisions/countries/statesPointsLists';
 import { JContinentMap, JCountryMap } from './RegionMap/JRegionMap';
 import JCell from './Voronoi/JCell';
-import GenerateMapVoronoiSites from './Voronoi/GenerateMapVoronoiSites';
 import chroma from 'chroma-js';
 import JHeightMap from './heightmap/JHeightMap';
-import JClimateMap from './heightmap/JClimateMap';
-import {calculateDayTempLat, calculateMonthTempLat, calculateTempPromPerLat} from './heightmap/JTempFunctions';
+import JTempMap from './heightmap/JTempMap';
+import * as JTempFunctions from './heightmap/JTempFunctions';
 
 const tam: number = 3600;
 let SIZE: JVector = new JVector({ x: tam, y: tam / 2 });
@@ -36,9 +36,9 @@ console.log('center buff');
 console.log(dm.getPointsBuffCenterLimits());
 
 const TOTAL: number = 700;
-const generator: JMapGenerator = new JMapGenerator(TOTAL);
+const world: JWorld = new JWorld(TOTAL);
 // let jwm: JWorldMap = JMapGenerator.generate(TOTAL);
-let jhm: JHeightMap = generator.generateHeightMap();
+let jhm: JHeightMap = world.generateHeightMap();
 
 dm.drawFondo()
 dm.drawCellMap(jhm, JCellToDrawEntryFunctions.heighLand(1));
@@ -104,52 +104,89 @@ dm.saveDrawFile(`${TOTAL}_heightMap.png`);
 Generar grilla
 */
 
-let dm2: DrawerMap = new DrawerMap(SIZE, __dirname + `/../img/${TOTAL}`);
-dm2.drawFondo()
-
-let grid: JPoint[] = [];
-const gridgran: number = 15;
-for (let i = -180; i <= 180; i += gridgran) {
-  for (let j = -90; j <= 90; j += gridgran) {
-    grid.push(new JPoint(i, j));
-  }
-}
 
 /**
  * 
  * sol y temp
  */
+let dm2: DrawerMap = new DrawerMap(SIZE, __dirname + `/../img/${TOTAL}`);
+dm2.drawFondo()
+let colorScale: chroma.Scale;
+/*
 
+const gridgran: number = 20;
+let grid = new JGrid(gridgran);// JPoint[] = [];
+console.log('grid created')
 // const BOLTZMAN: number = 5.67 * Math.pow(10,-8);
 
+
 const TODAY = 0;
-let colorScale = chroma.scale('Spectral').domain([30, -20]);
-
-grid.forEach((gp: JPoint) => {
-	let tempValue: number; /*= calculateDayTempLat(gp.y, TODAY);*/
-	tempValue = calculateTempPromPerLat(gp.y);
+colorScale = chroma.scale('Spectral').domain([1, 0]);
+let color:string;
+grid._points.forEach((gp: JPoint) => {
+	let tempValue: number;
+	tempValue = JTempFunctions.calculateTempPromPerLat(gp.y);
+	color = colorScale(tempValue).hex();
 	// console.log(Math.pow(342*tempValue/BOLTZMAN,0.25)-250)
-  /*
-	dm.drawDot(gp, {
-    fillColor: colorScale(tempValue).hex(),
-    strokeColor: colorScale(tempValue).hex()
-  }, 1)
-	*/
-})
 
-const jcm: JClimateMap = generator.generateClimateMap(jhm);
+	// const cellPoint = jhm.diagram.getCellFromPoint(gp);
+	// color = cellPoint.isLand ? '#157745' : '#777777';
+  
+	dm2.drawDot(gp, {
+    fillColor: color,
+    strokeColor: color
+  }, gridgran)
+	
+})
+*/
+let pointsArr: JPoint[] = [];
+let currentPoint: JPoint = new JPoint(180,0);
+// const ini: JPoint = new JPoint(180,0);
+console.log(currentPoint);
+
+pointsArr.push(currentPoint);
+
+for (let i=1; i <36; i++) {
+	currentPoint = JPoint.add(currentPoint, new JPoint(-10,0));
+	const cell: JCell = world.diagram.getCellFromPoint(currentPoint);
+	console.log(cell.isLand)
+	pointsArr.push(currentPoint);
+}
+
+pointsArr.forEach((p: JPoint) => 
+	dm.drawDot(p, {
+    fillColor: '#B1F1C5',
+    strokeColor: '#B1F1C5'
+  }, 0.5)
+);
+
+/*
+let cells = world.diagram.getCellsInSegment(new JPoint(-13,-8), new JPoint(13,8))
+console.log( cells.length )
+
+dm2.drawCellMap(createICellContainerFromCellArray(cells), JCellToDrawEntryFunctions.colors({
+  strokeColor: '#FF0000A0',
+  fillColor: '#FF0000A0'
+}))
+*/
+dm.drawMeridianAndParallels();
+dm.saveDrawFile(`currents.png`);
+
+
+const jtm: JTempMap = world.generateTemperatureMap();
 
 let color: string;
 
 // meses
+const tempStep: number = 5;
 colorScale = chroma.scale('Spectral').domain([30, -30]);
 const meses = [1,2,3,4,5,6,7,8,9,10,11,12];
 meses.forEach((mes: number) => {
 	
-	dm2.drawCellMap(jcm, (c: JCell): IDrawEntry => {
+	dm2.drawCellMap(jtm, (c: JCell): IDrawEntry => {
 		
-		let tarr: number[] = jcm._cellClimate.get(c.id)!._tempMonth;
-		let val: number = 2.5*Math.round((tarr[mes-1])/2.5);
+		let tarr: number[] = jtm._cellClimate.get(c.id)!._tempMonth;
+		let val: number = tempStep*Math.round((tarr[mes-1])/tempStep);
 		color = colorScale(val).hex();
 		return {
 			fillColor: color,
@@ -166,18 +203,18 @@ meses.forEach((mes: number) => {
 colorScale = chroma.scale('Spectral').domain([30, -30]);
 //colorScale = chroma.scale('Spectral').domain([30, -35]);
 let meds: number[] = [];
-dm2.drawCellMap(jcm, (c: JCell): IDrawEntry => {
-	let tarr: number[] = jcm._cellClimate.get(c.id)!._tempMonth;
+dm2.drawCellMap(jtm, (c: JCell): IDrawEntry => {
+	let tarr: number[] = jtm._cellClimate.get(c.id)!._tempMonth;
 	let val: number = 0;
 	tarr.forEach((t: number) => val += t/12)
 
 	meds.push(val);
 	
-	color = colorScale(2.5*Math.round(val/2.5)).hex();
-	/*
-	let value: number = jcm._tempCellCap.get(c.id)!;
-	color = colorScale(value).hex();
-	*/
+	color = colorScale(tempStep*Math.round(val/tempStep)).hex();
+	
+	// val = jtm._tempCellCap.get(c.id)!;
+	// color = colorScale(val).hex();
+	
 	return {
 		fillColor: color,
 		strokeColor: color
@@ -191,18 +228,18 @@ dm2.saveDrawFile(`tempMapMed.png`);
 colorScale = chroma.scale('Spectral').domain([30, 0]);
 let mins: number[] = [];
 let maxs: number[] = [];
-dm2.drawCellMap(jcm, (c: JCell): IDrawEntry => {
-	let tarr: number[] = jcm._cellClimate.get(c.id)!._tempMonth;
+dm2.drawCellMap(jtm, (c: JCell): IDrawEntry => {
+	let tarr: number[] = jtm._cellClimate.get(c.id)!._tempMonth;
 	const maximo = Math.max(...tarr);
 	const minimo = Math.min(...tarr);
 	maxs.push(maximo);
 	mins.push(minimo);
 	let val: number = maximo - minimo;
 	color = colorScale(val).hex();
-	/*
-	let value: number = jcm._tempCellCap.get(c.id)!;
-	color = colorScale(value).hex();
-	*/
+	
+	// val = jtm._tempCellCap.get(c.id)!;
+	// color = colorScale(val).hex();
+	
 	return {
 		fillColor: color,
 		strokeColor: color
@@ -212,11 +249,27 @@ dm2.drawCellMap(jcm, (c: JCell): IDrawEntry => {
 dm2.drawMeridianAndParallels();
 dm2.saveDrawFile(`tempMapVar.png`);
 
-console.log('max', Math.max(...maxs));
-console.log('min', Math.min(...mins));
+console.log('max', maxs.reduce((v: number, m: number) => (m > v) ? m : v));
+console.log('min', mins.reduce((v: number, m: number) => (m < v) ? m : v));
 let total: number = 0;
 meds.forEach((val: number) => total+=val);
-console.log('med', total/jcm.diagram.cells.size);
+console.log('med', total/jtm.diagram.cells.size);
+
+// temp cap
+colorScale = chroma.scale('Spectral').domain([1, 0]);
+dm2.drawCellMap(jtm, (c: JCell): IDrawEntry => {
+
+	let cap: number = jtm._cellClimate.get(c.id)!._tempCap;
+	color = colorScale(cap).hex();
+	
+	return {
+		fillColor: color,
+		strokeColor: color
+	}
+})
+
+dm2.drawMeridianAndParallels();
+dm2.saveDrawFile(`tempMapCap.png`);
 
 /**
  * 

@@ -6,7 +6,7 @@ import { IJContinentInfo, IJCountryInfo, IJIslandInfo, IJStateInfo, JContinentMa
 // import { IJDiagramInfo } from './Voronoi/JDiagram';
 // import { IJEdgeInfo } from './Voronoi/JEdge';
 import { IJCellInformation } from './Voronoi/JCellInformation';
-import { JCellClimate, IJCellClimateInfo } from './heightmap/JClimateMap'
+import { JCellTemp, IJCellTempInfo } from './heightmap/JTempMap'
 
 export default class DataInformationFilesManager {
 	static _instance: DataInformationFilesManager;
@@ -143,10 +143,10 @@ export default class DataInformationFilesManager {
 	}
 
 	// climate info cell
-	loadCellsClimate(tam: number): IJCellClimateInfo[] {
-		let out: IJCellClimateInfo[] = [];
+	loadCellsTemperature(tam: number): IJCellTempInfo[] {
+		let out: IJCellTempInfo[] = [];
 		try {
-			let pathName: string = `${this._dirPath}/${tam}/CellsInfo/climate.json`;
+			let pathName: string = `${this._dirPath}/${tam}/CellsInfo/temperature.json`;
 			out = JSON.parse(fs.readFileSync(pathName).toString());
 		} catch (e) {
 			
@@ -154,11 +154,11 @@ export default class DataInformationFilesManager {
 		return out;
 	}
 
-	saveCellsClimate(mapCells: Map<number, JCellClimate>, tam: number): void {
+	saveCellsTemperature(mapCells: Map<number, JCellTemp>, tam: number): void {
 		fs.mkdirSync(`${this._dirPath}/${tam}/CellsInfo`, {recursive: true});
-		let pathName: string = `${this._dirPath}/${tam}/CellsInfo/climate.json`;
-		let data: IJCellClimateInfo[] = [];
-		mapCells.forEach( (cell: JCellClimate) => {
+		let pathName: string = `${this._dirPath}/${tam}/CellsInfo/temperature.json`;
+		let data: IJCellTempInfo[] = [];
+		mapCells.forEach( (cell: JCellTemp) => {
 			data[cell.info.id] = cell.info;
 		})
 		fs.writeFileSync(pathName, JSON.stringify(data));

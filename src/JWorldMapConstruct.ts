@@ -1,4 +1,4 @@
-console.time('all');
+/*console.time('all');
 
 import * as JCellToDrawEntryFunctions from './JCellToDrawEntryFunctions';
 import DrawerMap from './DrawerMap'
@@ -14,4 +14,4 @@ DataInformationFilesManager.configPath( __dirname + `/../data`);
 
 let dm: DrawerMap = new DrawerMap(SIZE, __dirname + `/../img`);
 
-
+*/

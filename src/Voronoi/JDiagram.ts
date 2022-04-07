@@ -196,11 +196,36 @@ export default class JDiagram {
 			}			
 		}
 
+
 		this.forEachCell((cell: JCell) => cell.dismark())
 		//console.log(cell.id, 'out', out.length)
 
 		return out;
 	}
 
+	getCellsInSegment(ini: JPoint, end: JPoint): JCell[] {
+		let out: JCell[] = [];
+		const iniCell: JCell = this.getCellFromPoint(ini);
+		const endCell: JCell = this.getCellFromPoint(end);
+
+		out.push(iniCell);
+		let currCell = out[0];
+		let finished: boolean = endCell.id === currCell.id;
+		while (!finished) {
+			let arr: { cell: JCell; dist: number }[] = [];
+			this.getNeighbors(currCell).forEach((n: JCell) => {
+				arr.push({ cell: n, dist: JPoint.geogDistance(n.center, end) });
+				finished = true;
+			})
+			arr.sort((a, b) => a.dist - b.dist);
+
+			out.push(arr[0].cell);
+
+			currCell = arr[0].cell;
+			finished = endCell.id === currCell.id;
+		}
+		// out.push(endCell);
+		return out;
+	}
 }
 

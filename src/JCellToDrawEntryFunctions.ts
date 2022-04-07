@@ -1,5 +1,5 @@
 import chroma from 'chroma-js';
-const colorScale = chroma.scale('Spectral').domain([1,0]);
+const colorScale: chroma.Scale = chroma.scale('Spectral').domain([1,0]);
 
 import {IDrawEntry} from './DrawerMap';
 import JCell from './Voronoi/JCell';
@@ -45,7 +45,7 @@ export const land = (alpha: number = 1) => {
 export const list = (alpha: number = 1) => {
 	alpha = verifyAlpha(alpha);
 	return (c: JCell) => {
-		let color: string = c.isLand ? '#FFFFFF' : colorScale(0.05).alpha(alpha).hex();
+		let color: string = c.isLand ? chroma('#FFFFFF').alpha(alpha).hex() : colorScale(0.05).alpha(alpha).hex();
 		return {
 			fillColor: color,
 			strokeColor: color
