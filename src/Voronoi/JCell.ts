@@ -5,7 +5,9 @@ import JHalfEdge from './JHalfEdge';
 import JSite, { IJSiteInfo } from './JSite';
 
 import * as turf from '@turf/turf';
-import JCellInformation, { IJCellInformation } from "./JCellInformation";
+//import JCellInformation, { IJCellInformation } from "./JCellInformation";
+import JCellInformation from '../CellInformation/JCellInformation';
+import JCellHeight, { IJCellHeightInfo } from '../CellInformation/JCellHeight';
 
 /**
  * En una cell:
@@ -22,9 +24,9 @@ export default class JCell {
 	//private _cell: Cell;
 	private _site: JSite;
 	private _halfedges: JHalfEdge[] = [];
-	private /*readonly*/ _cellInformation: JCellInformation | undefined;
+	private /*readonly*/ _cellInformation: JCellInformation;
 
-	constructor(/*c: Cell,*/ s: JSite, arrEdges: JEdge[]/*, info: IJCellInformation | undefined*/) {
+	constructor(/*c: Cell,*/ s: JSite, arrEdges: JEdge[]) {
 		//this._cell = c;
 		this._site = s;
 		arrEdges.forEach((je: JEdge) => {
@@ -39,22 +41,16 @@ export default class JCell {
 		})
 		*/
 		// this._cellInformation = new JCellInformation(this, info);
+		this._cellInformation = new JCellInformation(this);
 	}
 
-	get info(): IJCellInformation { return this._cellInformation!.getInterface() }
-	set heighInfo(info: IJCellInformation | undefined) {
-		this._cellInformation = new JCellInformation(this, info);
+	static equals(a: JCell, b: JCell): boolean {
+		return (a.id === b.id)
 	}
-
+	
 	get site(): JSite { return this._site }
 	get id(): number { return this._site.id }
 	get center(): JPoint { return this._site.point }
-	get isLand(): boolean { return this._cellInformation!.heightType === 'land' }
-
-	// ver estos
-	set islandId(id: number) { this._cellInformation!.island = id; }
-	get islandId(): number { return this._cellInformation!.island; }
-
 	get allVertices(): JPoint[] {
 		let out: JPoint[] = [];
 		for (let he of this._halfedges) {
@@ -85,10 +81,6 @@ export default class JCell {
 		})
 		return out;
 	}
-
-	get height(): number { return this._cellInformation!.height }
-	get prevHeight(): number { return this._cellInformation!.prevHeight }
-	set height(h: number) { this._cellInformation!.height = h }
 
 	get isBorder(): boolean {
 		let out: boolean = false;
@@ -123,19 +115,27 @@ export default class JCell {
 		])
 	}
 
+	/*
+	 * Generic Information
+	 */
 	mark(): void { this._cellInformation!.mark = true }
 	dismark(): void { this._cellInformation!.mark = false }
 	isMarked(): boolean { return this._cellInformation!.mark }
+	/*
+	 * Height or relief Information
+	 */
 
+	get info(): JCellInformation {return this._cellInformation}
+
+	/*get heightInfo(): JCellHeight {
+		return this._cellInformation.getHeightInfo()!;
+	}*/
+	
 	// getInterface(): IJCellInfo {
 	// 	return {
 	// 		site: this._site.getInterface(),
 	// 		halfedges: this._halfedges.map((jhe: JHalfEdge) => {return jhe.getInterface()})
 	// 	}
 	// }
-
-	static equals(a: JCell, b: JCell): boolean {
-		return (a.id === b.id)
-	}
 
 }

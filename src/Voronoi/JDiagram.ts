@@ -5,7 +5,7 @@ import JCell from "./JCell";
 import JEdge from "./JEdge";
 import JSite from './JSite';
 import DataInformationFilesManager from '../DataInformationLoadAndSave';
-import { IJCellInformation } from './JCellInformation';
+// import { IJCellInformation } from './JCellInformation';
 const dataInfoManager = DataInformationFilesManager.instance;
 
 
@@ -157,6 +157,24 @@ export default class JDiagram {
 				minDis = dis;
 			}
 		})
+		if (out)
+			return out;
+		else {
+			throw new Error('no se encontro cell');
+		}
+	}
+
+	getCellFromPoint2(p: JPoint): JCell {
+		let out: JCell | undefined;
+		let founded: boolean = false;
+		let i: number = 0;
+		while (!founded && i < this._cells.size) {
+			if (turf.booleanPointInPolygon(turf.point(p.toTurfPosition()), this._cells.get(i)!.toTurfPolygonSimple())) {
+				out = this._cells.get(i);
+				founded = true;
+			}
+			i++;
+		}
 		if (out)
 			return out;
 		else {

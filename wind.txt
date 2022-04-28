@@ -1,0 +1,99 @@
+/**
+ * 
+ * Vientos
+ */
+// let ini: JPoint;
+// let ent: IDrawEntry;
+// let jgranu: number = 10;
+// let dotsize: number = 0.5;
+// // alisios
+// ent = {
+//   strokeColor: `#6E7DAB`,
+//   fillColor: `#6E7DAB`
+// };
+
+// for (let j = -200; j <= 200; j += jgranu) {
+
+//   ini = new JPoint(j, 30);
+//   dm.drawDot(ini, ent, 1);
+
+//   for (let i = 200; i >= 0; i--) {
+//     const y = -Math.cos((ini.y - 30) / 30 * Math.PI / 2);
+//     const x = Math.sin((ini.y - 30) / 30 * Math.PI / 2);
+//     let nuevo: JPoint = JPoint.add(ini, new JPoint(x, y));
+//     dm.drawDot(nuevo, ent, dotsize);
+// 	  ini = nuevo;
+//   }
+
+//   ini = new JPoint(j, -30)
+//   dm.drawDot(ini, ent, 1);
+
+//   for (let i = 200; i >= 0; i--) {
+//     const y = -Math.cos((ini.y - 30) / 30 * Math.PI / 2);
+//     const x = Math.sin((ini.y - 30) / 30 * Math.PI / 2);
+//     let nuevo: JPoint = JPoint.add(ini, new JPoint(x, y));
+//     dm.drawDot(nuevo, ent, dotsize);
+//     ini = nuevo;
+//   }
+// }
+
+// westerns
+// ent = {
+//   strokeColor: `#5762D5`,
+//   fillColor: `#5762D5`
+// };
+// for (let j = -200; j <= 200; j += jgranu) {
+
+//   ini = new JPoint(j, 30)
+//   dm.drawDot(ini, ent, 1);
+
+//   for (let i = 200; i >= 0; i--) {
+//     const y = Math.cos((ini.y - 30) / 30 * Math.PI / 2);
+//     const x = Math.sin((ini.y - 30) / 30 * Math.PI / 2);
+//     let nuevo: JPoint = JPoint.add(ini, new JPoint(x, y));
+//     dm.drawDot(nuevo, ent, dotsize);
+//     ini = nuevo;
+//   }
+
+//   ini = new JPoint(j, -30)
+//   dm.drawDot(ini, ent, 1);
+
+//   for (let i = 200; i >= 0; i--) {
+//     const y = Math.cos((ini.y - 30) / 30 * Math.PI / 2);
+//     const x = Math.sin((ini.y - 30) / 30 * Math.PI / 2);
+//     let nuevo: JPoint = JPoint.add(ini, new JPoint(x, y));
+//     dm.drawDot(nuevo, ent, dotsize);
+//     ini = nuevo;
+//   }
+// }
+
+// // polar
+// ent = {
+//   strokeColor: `#FFFFFF`,
+//   fillColor: `#FFFFFF`
+// };
+
+// for (let j = -200; j <= 200; j += jgranu) {
+
+//   ini = new JPoint(j, 90)
+//   dm.drawDot(ini, ent, 1);
+
+//   for (let i = 200; i >= 0; i--) {
+//     const y = Math.cos((ini.y - 30) / 30 * Math.PI / 2);
+//     const x = Math.sin((ini.y - 30) / 30 * Math.PI / 2);
+//     let nuevo: JPoint = JPoint.add(ini, new JPoint(x, y));
+//     dm.drawDot(nuevo, ent, dotsize);
+//     ini = nuevo;
+//   }
+
+//   ini = new JPoint(j, -90)
+//   dm.drawDot(ini, ent, 1);
+
+//   for (let i = 200; i >= 0; i--) {
+//     const y = Math.cos((ini.y - 30) / 30 * Math.PI / 2);
+//     const x = Math.sin((ini.y - 30) / 30 * Math.PI / 2);
+//     let nuevo: JPoint = JPoint.add(ini, new JPoint(x, y));
+//     dm.drawDot(nuevo, ent, dotsize);
+//     ini = nuevo;
+//   }
+// }

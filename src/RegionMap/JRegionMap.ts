@@ -109,14 +109,14 @@ export default class JRegionMap extends JWMap  {
 		if (this.isInRegion(c.id)) {
 			return;
 		}
-		if (c.isLand) {
+		if (c.info.isLand) {
 			this._cells.set(c.id, c);
 			this._area += c.area;
 			this._limitCellList.add(c.id);
 		}
 		c.neighborsId.forEach((id: number) => {
 			const ncell = this.diagram.cells.get(id);
-			if (ncell && !this.isInRegion(ncell) && ncell.info.heightType !== 'deepocean') {
+			if (ncell && !this.isInRegion(ncell) && ncell.info.getHeightInfo()!.heightType !== 'deepocean') {
 				this._neighborList.add(id);
 			}
 		})
@@ -161,7 +161,7 @@ export default class JRegionMap extends JWMap  {
 		let list = [...this._neighborList]
 		list.forEach((e: number) => {
 			const cell: JCell = this.diagram.cells.get(e) as JCell;
-			if (!cell.isLand || (!(regFather && !regFather.isInRegion(e)))) {
+			if (!cell.info.isLand || (!(regFather && !regFather.isInRegion(e)))) {
 				this.addCell(cell);
 				this._neighborList.delete(e);
 			}
@@ -183,7 +183,7 @@ export default class JRegionMap extends JWMap  {
 			subs.push(newSR);
 			points.forEach((p: JPoint) => {
 				const centerCell: JCell = this.diagram.getCellFromPoint(p);
-				if (landOnly && !centerCell.isLand) throw Error(`la celda es agua\nx: ${p.x};y: ${p.y}`)
+				if (landOnly && !centerCell.info.isLand) throw Error(`la celda es agua\nx: ${p.x};y: ${p.y}`)
 				if (landOnly && !this.isInRegion(centerCell)) throw new Error(`la celda ${centerCell} no esta en la region\nx: ${p.x};y: ${p.y}`)
 				centerCell.mark();
 				newSR.addCell(centerCell);
@@ -215,15 +215,15 @@ export default class JRegionMap extends JWMap  {
 		list.forEach((e: number) => {
 			const cell: JCell = this.diagram.cells.get(e) as JCell;
 			let randValue: boolean;
-			if (!cell.isLand && landOnly) {
+			if (!cell.info.isLand && landOnly) {
 				randValue = false;
 			} else {
-				randValue = (cell.isLand) ? randFunc() < 0.5 : randFunc() < 0.25;
+				randValue = (cell.info.isLand) ? randFunc() < 0.5 : randFunc() < 0.25;
 			}
 			if (randValue) {
 				// si cell is land entonces debe estar en regFather y ademas no debe estar marcado
-				if ((!cell.isLand || regFather.isInRegion(cell)) && !cell.isMarked()) {
-					if (cell.isLand) used.set(cell.id, cell.id)
+				if ((!cell.info.isLand || regFather.isInRegion(cell)) && !cell.isMarked()) {
+					if (cell.info.isLand) used.set(cell.id, cell.id)
 					cell.mark();
 					this.addCell(cell);
 					this._neighborList.delete(e);

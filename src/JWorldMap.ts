@@ -78,7 +78,7 @@ export default class JWorldMap implements ICellContainer {
 	private generateIslandList(): void {
 		let lista: Map<number, JCell> = new Map<number, JCell>();
 		this._diagram.forEachCell((c: JCell) => {
-			if (c.isLand) lista.set(c.id, c);
+			if (c.info.isLand) lista.set(c.id, c);
 		})
 
 		let currentId = -1;
@@ -107,7 +107,7 @@ export default class JWorldMap implements ICellContainer {
 				reg.addCell(neigh);
 
 				this._diagram.getNeighbors(neigh).forEach((nnn: JCell) => {
-					if (nnn.isLand && !nnn.isMarked() && !qeue.has(nnn.id)) {
+					if (nnn.info.isLand && !nnn.isMarked() && !qeue.has(nnn.id)) {
 						qeue.set(nnn.id, nnn);
 					}
 				})

@@ -1,3 +1,4 @@
+/*
 import RandomNumberGenerator from "../Geom/RandomNumberGenerator";
 import { BuffRegs } from "../zones/BuffRegs";
 import { pointInArrReg } from "../Geom/utilsTurfFunctions";
@@ -107,3 +108,4 @@ export default class JCellInformation {
 		}
 	}
 }
+*/

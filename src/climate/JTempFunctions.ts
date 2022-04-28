@@ -143,4 +143,6 @@ export const calculateTempMaxPerLat = (lat: number): number => {
 //   })
 
 // }
-
+export const parametertoRealTemp = (tv: number): number => {
+	return tv * 70 - 42;
+}

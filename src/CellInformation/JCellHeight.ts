@@ -14,30 +14,31 @@ export type TypeCellheight =
 	| 'ocean'
 	| 'land'
 
-export interface IJCellInformation {
+export interface IJCellHeightInfo {
 	id: number;
 
 	height: number;
 	prevHeight: number;
 	heightType: TypeCellheight;
+	islandId: number;
 }
 
-export default class JCellHeightInfo {
+export default class JCellHeight {
 	private _cell: JCell;
-	private _mark: boolean = false;
 
 	private _height: number;
 	private _prevHeight: number = 0;
 	private _heightType: TypeCellheight;
-	private _island: number = -1;
+	private _islandId: number = -1;
 
-	constructor(c: JCell, info: IJCellInformation | undefined) {
+	constructor(c: JCell, info: IJCellHeightInfo | undefined) {
 		this._cell = c;
 		// const turfPol = this._cell.toTurfPolygonSimple();
 		if (info) {
 			this._height = info.height;
 			this._prevHeight = info.prevHeight;
 			this._heightType = info.heightType;
+			this._islandId = info.islandId;
 			
 		} else {
 			const out = this.setReliefZone();
@@ -46,6 +47,30 @@ export default class JCellHeightInfo {
 		}
 	}
 
+	// setReliefZone(): { h: number, th: TypeCellheight } {
+	// 	let out: { h: number, th: TypeCellheight } = { h: 0, th: 'land' };
+	// 	const rfn: ()=>number = RandomNumberGenerator.makeRandomFloat(this._cell.id);
+	// 	if (!pointInArrReg(this._cell.center.toTurfPosition(), BuffRegs)) {
+	// 		out.h = 0.05;
+	// 		out.th = 'deepocean'
+	// 	} else if (pointInArrReg(this._cell.center.toTurfPosition(), HHRegs)) {
+	// 		out.h = 0.88+0.200*rfn();
+	// 	} else if (pointInArrReg(this._cell.center.toTurfPosition(), HLRegs)) {
+	// 		out.h = 0.68+0.240*rfn();
+	// 	} else if (pointInArrReg(this._cell.center.toTurfPosition(), MHRegs)) {
+	// 		out.h = 0.44+0.280*rfn();
+	// 	} else if (pointInArrReg(this._cell.center.toTurfPosition(), MLRegs)) {
+	// 		out.h = 0.30+0.180*rfn();
+	// 	} else if (pointInArrReg(this._cell.center.toTurfPosition(), LHRegs)) {
+	// 		out.h = 0.24+0.080*rfn();
+	// 	} else if (pointInArrReg(this._cell.center.toTurfPosition(), LLRegs)) {
+	// 		out.h = 0.20+0.048*rfn();
+	// 	} else {
+	// 		out.h = 0.18;
+	// 		out.th = 'ocean';
+	// 	}
+	// 	return out;
+	// }
 	setReliefZone(): { h: number, th: TypeCellheight } {
 		let out: { h: number, th: TypeCellheight } = { h: 0, th: 'land' };
 		const rfn: ()=>number = RandomNumberGenerator.makeRandomFloat(this._cell.id);
@@ -53,17 +78,17 @@ export default class JCellHeightInfo {
 			out.h = 0.05;
 			out.th = 'deepocean'
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), HHRegs)) {
-			out.h = 0.88+0.200*rfn();
+			out.h = 0.700+0.300*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), HLRegs)) {
-			out.h = 0.68+0.240*rfn();
+			out.h = 0.450+0.260*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), MHRegs)) {
-			out.h = 0.44+0.280*rfn();
+			out.h = 0.315+0.150*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), MLRegs)) {
-			out.h = 0.30+0.180*rfn();
+			out.h = 0.240+0.100*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), LHRegs)) {
-			out.h = 0.24+0.080*rfn();
+			out.h = 0.216+0.034*rfn();
 		} else if (pointInArrReg(this._cell.center.toTurfPosition(), LLRegs)) {
-			out.h = 0.20+0.048*rfn();
+			out.h = 0.200+0.020*rfn();
 		} else {
 			out.h = 0.18;
 			out.th = 'ocean';
@@ -89,19 +114,18 @@ export default class JCellHeightInfo {
 		this._prevHeight = this._height;
 		this._height = h;
 	}
-	set island(id: number) { this._island = id }
-	get island(): number { return this._island }
+	set islandId(id: number) { this._islandId = id }
+	get islandId(): number { return this._islandId }
 	// get inLandZone(): boolean {return this._heightType === ''}
-	get mark(): boolean {return this._mark}
-	set mark(b: boolean) {this._mark = b}
 
-	getInterface(): IJCellInformation { 
+	getInterface(): IJCellHeightInfo { 
 		return {
 			id: this._cell.id,
 
 			height: this._height,
 			prevHeight: this._prevHeight,
 			heightType: this._heightType,
+			islandId: this._islandId
 		}
 	}
 }

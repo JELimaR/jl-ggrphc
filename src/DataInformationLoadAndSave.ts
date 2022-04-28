@@ -5,8 +5,11 @@ import JCell from './Voronoi/JCell';
 import { IJContinentInfo, IJCountryInfo, IJIslandInfo, IJStateInfo, JContinentMap, JCountryMap, JIslandMap, JStateMap } from './RegionMap/JRegionMap';
 // import { IJDiagramInfo } from './Voronoi/JDiagram';
 // import { IJEdgeInfo } from './Voronoi/JEdge';
-import { IJCellInformation } from './Voronoi/JCellInformation';
-import { JCellTemp, IJCellTempInfo } from './heightmap/JTempMap'
+import { IJGridPointInfo, JGridPoint } from './Geom/JGrid';
+// import { IJCellInformation } from './Voronoi/JCellInformation';
+// import { IJCellInformation } from './CellInformation/JCellInformation';
+import { IJCellHeightInfo } from './CellInformation/JCellHeight';
+import JCellTemp, { IJCellTempInfo } from './CellInformation/JCellTemp';
 
 export default class DataInformationFilesManager {
 	static _instance: DataInformationFilesManager;
@@ -97,7 +100,7 @@ export default class DataInformationFilesManager {
 		fs.writeFileSync(pathName, JSON.stringify(edges));
 	}
 	*/
-	// sites
+	// voronoi diagram sites
 	loadSites(tam: number): Site[] {
 		if (this._dirPath === '') throw new Error('non configurated path');
 		let out: Site[] = [];
@@ -116,13 +119,35 @@ export default class DataInformationFilesManager {
 		fs.writeFileSync(pathName, JSON.stringify(sites));
 	}
 
+	// grid
+	loadGridPoints(gran: number, tam: number): IJGridPointInfo[][] {
+		let out: IJGridPointInfo[][] = [];
+		try {
+			let pathFile: string = `${this._dirPath}/${tam}/G${gran}_grid.json`;
+			out = JSON.parse(fs.readFileSync(pathFile).toString());
+		} catch (e) {
+			
+		}
+		return out;		
+	}
+
+	saveGridPoints(gridPoints: JGridPoint[][], gran: number, tam: number) {
+		const data: IJGridPointInfo[][] = gridPoints.map((col: JGridPoint[]) => {
+			return col.map((gp: JGridPoint) => gp.getInterface());
+		})
+		fs.mkdirSync(`${this._dirPath}/${tam}`, {recursive: true});
+		let pathName: string = `${this._dirPath}/${tam}/G${gran}_grid.json`;
+		fs.writeFileSync(pathName, JSON.stringify(data));		
+	}
+
 	/**
 	 * cells information
 	 */
 	
 	// heigth info cell
-	loadCellsHeigth(tam: number): IJCellInformation[] {
-		let out: IJCellInformation[] = [];
+	// loadCellsHeigth(tam: number): IJCellInformation[] {
+	loadCellsHeigth(tam: number): IJCellHeightInfo[] {
+		let out: IJCellHeightInfo[] = [];
 		try {
 			let pathName: string = `${this._dirPath}/${tam}/CellsInfo/heigth.json`;
 			out = JSON.parse(fs.readFileSync(pathName).toString());
@@ -135,9 +160,9 @@ export default class DataInformationFilesManager {
 	saveCellsHeigth(mapCells: Map<number, JCell>, tam: number): void {
 		fs.mkdirSync(`${this._dirPath}/${tam}/CellsInfo`, {recursive: true});
 		let pathName: string = `${this._dirPath}/${tam}/CellsInfo/heigth.json`;
-		let data: IJCellInformation[] = [];
+		let data: IJCellHeightInfo[] = [];
 		mapCells.forEach( (cell: JCell) => {
-			data[cell.id] = cell.info;
+			data[cell.id] = cell.info.getHeightInfo()!;
 		})
 		fs.writeFileSync(pathName, JSON.stringify(data));
 	}
@@ -154,12 +179,12 @@ export default class DataInformationFilesManager {
 		return out;
 	}
 
-	saveCellsTemperature(mapCells: Map<number, JCellTemp>, tam: number): void {
+	saveCellsTemperature(mapCells: Map<number, JCell>, tam: number): void {
 		fs.mkdirSync(`${this._dirPath}/${tam}/CellsInfo`, {recursive: true});
 		let pathName: string = `${this._dirPath}/${tam}/CellsInfo/temperature.json`;
 		let data: IJCellTempInfo[] = [];
-		mapCells.forEach( (cell: JCellTemp) => {
-			data[cell.info.id] = cell.info;
+		mapCells.forEach( (cell: JCell) => {
+			data[cell.id] = cell.info.getTempInfo()!;
 		})
 		fs.writeFileSync(pathName, JSON.stringify(data));
 	}
